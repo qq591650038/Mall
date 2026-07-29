@@ -1008,6 +1008,17 @@ CREATE TABLE IF NOT EXISTS `marketing_participant` (
     KEY `idx_participant_expire` (`activity_id`, `group_status`, `status`, `group_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='营销活动参与者表';
 
+CREATE TABLE IF NOT EXISTS `seckill_user_quota` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `activity_item_id` BIGINT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `reserved_quantity` INT NOT NULL DEFAULT 0,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_seckill_user_quota` (`activity_item_id`, `user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='秒杀用户已占用限购额度';
+
 -- =============================================
 -- 会员等级表
 -- =============================================

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.mapper.SeckillUserQuotaMapper">
+    <insert id="ensureRow">
+        INSERT IGNORE INTO seckill_user_quota (activity_item_id, user_id, reserved_quantity)
+        VALUES (#{itemId}, #{userId}, 0)
+    </insert>
+
+    <update id="reserve">
+        UPDATE seckill_user_quota
+        SET reserved_quantity = reserved_quantity + #{quantity}, update_time = NOW()
+        WHERE activity_item_id = #{itemId}
+          AND user_id = #{userId}
+          AND reserved_quantity + #{quantity} &lt;= #{limit}
+    </update>
+
+    <update id="release">
+        UPDATE seckill_user_quota
+        SET reserved_quantity = GREATEST(0, reserved_quantity - #{quantity}), update_time = NOW()
+        WHERE activity_item_id = #{itemId} AND user_id = #{userId}
+    </update>
+</mapper>

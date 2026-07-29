@@ -11,6 +11,7 @@ import com.mall.mapper.MarketingActivityItemMapper;
 import com.mall.mapper.MarketingActivityMapper;
 import com.mall.mapper.MarketingParticipantMapper;
 import com.mall.mapper.SeckillRequestMapper;
+import com.mall.mapper.SeckillUserQuotaMapper;
 import com.mall.service.AddressService;
 import com.mall.service.OrderService;
 import com.mall.service.SeckillAsyncService;
@@ -53,12 +54,19 @@ public class SeckillAsyncServiceImpl implements SeckillAsyncService {
     private static final DefaultRedisScript<Long> COMPENSATE_SCRIPT = new DefaultRedisScript<>("""
             redis.call('INCRBY', KEYS[1], tonumber(ARGV[1]))
             local bought = tonumber(redis.call('GET', KEYS[2]) or '0') - tonumber(ARGV[1])
-            if bought <= 0 then redis.call('DEL', KEYS[2]) else redis.call('SET', KEYS[2], bought) end
+            if bought <= 0 then
+                redis.call('DEL', KEYS[2])
+            else
+                local ttl = redis.call('TTL', KEYS[2])
+                redis.call('SET', KEYS[2], bought)
+                if ttl > 0 then redis.call('EXPIRE', KEYS[2], ttl) end
+            end
             return 1
             """, Long.class);
 
     private final StringRedisTemplate redis;
     private final SeckillRequestMapper requestMapper;
+    private final SeckillUserQuotaMapper quotaMapper;
     private final MarketingActivityMapper activityMapper;
     private final MarketingActivityItemMapper itemMapper;
     private final MarketingParticipantMapper participantMapper;
@@ -67,13 +75,14 @@ public class SeckillAsyncServiceImpl implements SeckillAsyncService {
     private final ObjectProvider<DefaultMQProducer> producerProvider;
     private final String topic;
 
-    public SeckillAsyncServiceImpl(StringRedisTemplate redis, SeckillRequestMapper requestMapper,
+    public SeckillAsyncServiceImpl(StringRedisTemplate redis, SeckillRequestMapper requestMapper, SeckillUserQuotaMapper quotaMapper,
                                    MarketingActivityMapper activityMapper, MarketingActivityItemMapper itemMapper,
                                    MarketingParticipantMapper participantMapper, AddressService addressService,
                                    OrderService orderService, ObjectProvider<DefaultMQProducer> producerProvider,
                                    @Value("${rocketmq.topic}") String topic) {
         this.redis = redis;
         this.requestMapper = requestMapper;
+        this.quotaMapper = quotaMapper;
         this.activityMapper = activityMapper;
         this.itemMapper = itemMapper;
         this.participantMapper = participantMapper;
@@ -98,8 +107,9 @@ public class SeckillAsyncServiceImpl implements SeckillAsyncService {
         Address address = addressService.listByUserId(userId).stream().filter(value -> Integer.valueOf(1).equals(value.getIsDefault()))
                 .findFirst().orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "Default address is required"));
         String stockKey = stockKey(itemId);
-        redis.opsForValue().setIfAbsent(stockKey, String.valueOf(item.getStock()), java.time.Duration.ofDays(2));
-        long result = redis.execute(RESERVE_SCRIPT, List.of(stockKey, userKey(itemId, userId)), String.valueOf(actualQuantity), String.valueOf(limit), "172800");
+        long ttlSeconds = Math.max(1, java.time.Duration.between(LocalDateTime.now(), activity.getEndTime()).getSeconds());
+        redis.opsForValue().setIfAbsent(stockKey, String.valueOf(item.getStock()), java.time.Duration.ofSeconds(ttlSeconds));
+        long result = redis.execute(RESERVE_SCRIPT, List.of(stockKey, userKey(itemId, userId)), String.valueOf(actualQuantity), String.valueOf(limit), String.valueOf(ttlSeconds));
         if (result == 0)
             throw new BusinessException(ErrorCode.STOCK_INSUFFICIENT, "Seckill stock is insufficient");
         if (result == -1) throw new BusinessException(ErrorCode.BAD_REQUEST, "Purchase limit exceeded");
@@ -150,7 +160,15 @@ public class SeckillAsyncServiceImpl implements SeckillAsyncService {
         try {
             MarketingActivityItem item = itemMapper.selectById(request.getActivityItemId());
             MarketingActivity activity = activityMapper.selectById(request.getActivityId());
-            if (item == null || activity == null || !"FLASH_SALE".equals(activity.getType()) || itemMapper.deductForSeckill(item.getId(), request.getQuantity()) != 1) {
+            if (item == null || activity == null || !"FLASH_SALE".equals(activity.getType())) {
+                throw new BusinessException(ErrorCode.STOCK_INSUFFICIENT, "Seckill stock is insufficient");
+            }
+            int limit = item.getLimitPerUser() == null ? 1 : item.getLimitPerUser();
+            quotaMapper.ensureRow(item.getId(), request.getUserId());
+            if (quotaMapper.reserve(item.getId(), request.getUserId(), request.getQuantity(), limit) != 1) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "Seckill purchase limit exceeded");
+            }
+            if (itemMapper.deductForSeckill(item.getId(), request.getQuantity()) != 1) {
                 throw new BusinessException(ErrorCode.STOCK_INSUFFICIENT, "Seckill stock is insufficient");
             }
             CreateOrderDTO dto = new CreateOrderDTO();
@@ -192,6 +210,7 @@ public class SeckillAsyncServiceImpl implements SeckillAsyncService {
     @Override
     public void restoreActivityStock(Long itemId, Long userId, Integer quantity) {
         if (itemId == null || userId == null || quantity == null || quantity <= 0) return;
+        quotaMapper.release(itemId, userId, quantity);
         redis.execute(COMPENSATE_SCRIPT, List.of(stockKey(itemId), userKey(itemId, userId)), String.valueOf(quantity));
     }
 
