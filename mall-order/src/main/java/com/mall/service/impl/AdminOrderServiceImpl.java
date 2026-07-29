@@ -2,8 +2,10 @@ package com.mall.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mall.common.result.CursorPageResult;
 import com.mall.common.result.ErrorCode;
 import com.mall.common.result.OrderStatus;
+import com.mall.common.util.CursorCodec;
 import com.mall.entity.*;
 import com.mall.exception.BusinessException;
 import com.mall.mapper.*;
@@ -44,6 +46,47 @@ public class AdminOrderServiceImpl implements AdminOrderService {
             throw new BusinessException(ErrorCode.ORDER_NOT_EXIST);
         }
         return o;
+    }
+
+    @Override
+    public CursorPageResult<OrderVO> cursorPage(Integer size, Integer status, String orderNo, Long userId, String cursor) {
+        int limit = Math.min(Math.max(size == null ? 20 : size, 1), 100) + 1;
+        CursorCodec.Decoded decoded = CursorCodec.decode(cursor);
+        List<Order> rows = orderMapper.selectAdminCursorPage(status, orderNo, userId,
+                decoded == null ? null : decoded.createTime(), decoded == null ? null : decoded.id(), limit);
+        boolean hasNext = rows.size() == limit;
+        List<Order> orders = hasNext ? rows.subList(0, limit - 1) : rows;
+        return new CursorPageResult<>(toPageVOs(orders), hasNext ? cursorOf(orders.get(orders.size() - 1)) : null, hasNext);
+    }
+
+    private String cursorOf(Order order) {
+        return CursorCodec.encode(order.getCreateTime(), order.getId());
+    }
+
+    private List<OrderVO> toPageVOs(List<Order> orders) {
+        if (orders.isEmpty()) return List.of();
+        List<Long> userIds = orders.stream().map(Order::getUserId).filter(Objects::nonNull).distinct().toList();
+        Map<Long, String> usernameMap = userIds.isEmpty() ? Map.of() : userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getUsername, (a, b) -> a));
+        return orders.stream().map(o -> {
+            OrderVO vo = new OrderVO();
+            vo.setId(o.getId());
+            vo.setOrderNo(o.getOrderNo());
+            vo.setUsername(usernameMap.getOrDefault(o.getUserId(), "Unknown user"));
+            vo.setTotalAmount(o.getTotalAmount());
+            vo.setPayAmount(o.getPayAmount());
+            vo.setOrderStatus(o.getOrderStatus());
+            vo.setOrderStatusText(OrderStatus.getTextByCode(o.getOrderStatus()));
+            vo.setCreateTime(o.getCreateTime());
+            vo.setPayTime(o.getPayTime());
+            vo.setShipTime(o.getShipTime());
+            vo.setReceiveTime(o.getReceiveTime());
+            vo.setLogisticsCompany(o.getLogisticsCompany());
+            vo.setLogisticsNo(o.getLogisticsNo());
+            vo.setExpireTime(o.getExpireTime());
+            vo.setPayStatus(o.getPayStatus());
+            return vo;
+        }).toList();
     }
 
     @Override

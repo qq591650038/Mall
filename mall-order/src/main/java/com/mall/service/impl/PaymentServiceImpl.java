@@ -7,30 +7,28 @@ import com.mall.entity.Order;
 import com.mall.entity.OrderItem;
 import com.mall.entity.Payment;
 import com.mall.exception.BusinessException;
-import com.mall.mapper.OrderItemMapper;
-import com.mall.mapper.OrderMapper;
-import com.mall.mapper.PaymentMapper;
-import com.mall.mapper.ProductMapper;
-import com.mall.service.PaymentService;
-import com.mall.service.NotificationService;
+import com.mall.mapper.*;
 import com.mall.service.MarketingActivityService;
+import com.mall.service.NotificationService;
+import com.mall.service.PaymentService;
 import com.mall.service.PointsService;
 import com.mall.vo.GroupPaymentResult;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.HexFormat;
-import java.security.MessageDigest;
 import java.util.List;
 
 @Service
@@ -45,14 +43,26 @@ public class PaymentServiceImpl implements PaymentService {
     private final MarketingActivityService marketingActivityService;
     private final PointsService pointsService;
     private final boolean mockEnabled;
+    private final UserSpendingMapper userSpendingMapper;
+
+    @Autowired
+    public PaymentServiceImpl(PaymentMapper paymentMapper, OrderMapper orderMapper, OrderItemMapper orderItemMapper,
+                              ProductMapper productMapper, NotificationService notificationService,
+                              MarketingActivityService marketingActivityService, PointsService pointsService,
+                              @Value("${payment.callback-secret}") String secret,
+                              @Value("${payment.mock-enabled:false}") boolean mockEnabled) {
+        this(paymentMapper, orderMapper, orderItemMapper, productMapper, notificationService,
+                marketingActivityService, pointsService, null, secret, mockEnabled);
+    }
 
     public PaymentServiceImpl(PaymentMapper paymentMapper, OrderMapper orderMapper, OrderItemMapper orderItemMapper,
-            ProductMapper productMapper,
-            NotificationService notificationService,
-            MarketingActivityService marketingActivityService,
-            PointsService pointsService,
-            @Value("${payment.callback-secret}") String secret,
-            @Value("${payment.mock-enabled:false}") boolean mockEnabled) {
+                              ProductMapper productMapper,
+                              NotificationService notificationService,
+                              MarketingActivityService marketingActivityService,
+                              PointsService pointsService,
+                              UserSpendingMapper userSpendingMapper,
+                              @Value("${payment.callback-secret}") String secret,
+                              @Value("${payment.mock-enabled:false}") boolean mockEnabled) {
         this.paymentMapper = paymentMapper;
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
@@ -60,6 +70,7 @@ public class PaymentServiceImpl implements PaymentService {
         this.notificationService = notificationService;
         this.marketingActivityService = marketingActivityService;
         this.pointsService = pointsService;
+        this.userSpendingMapper = userSpendingMapper;
         this.secret = secret;
         this.mockEnabled = mockEnabled;
     }
@@ -149,6 +160,9 @@ public class PaymentServiceImpl implements PaymentService {
         // 支付成功后发送站内消息通知
         Order order = orderMapper.selectById(payment.getOrderId());
         if (order != null) {
+            if (userSpendingMapper != null) {
+                userSpendingMapper.adjust(order.getUserId(), payment.getAmount());
+            }
             notificationService.notify(
                     order.getUserId(),
                     "PAYMENT_SUCCESS",

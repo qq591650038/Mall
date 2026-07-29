@@ -1,24 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mall.mapper.OrderMapper">
-  <!-- 使用原状态条件实现 CAS 状态转换，避免并发请求覆盖订单状态。 -->
-  <update id="updateStatus">
-    UPDATE `order`
-    SET order_status = #{toStatus}, update_time = NOW()
-    WHERE id = #{id} AND user_id = #{userId}
-      AND order_status = #{fromStatus} AND deleted = 0
-  </update>
-  <!-- 超时取消只处理待支付订单，避免取消已支付订单。 -->
-  <update id="cancelPending">
-    UPDATE `order`
-    SET order_status = 4, update_time = NOW()
-    WHERE id = #{id} AND order_status = 0 AND deleted = 0
-  </update>
-  <!-- 只有待支付订单可以标记为已支付，重复回调不会重复变更状态。 -->
-  <update id="markPaid">
-    UPDATE `order`
-    SET order_status = 1, pay_status = 1, pay_time = NOW(),
-        expire_time = NULL, update_time = NOW()
-    WHERE id = #{id} AND order_status = 0 AND deleted = 0
-  </update>
+    <select id="selectAdminCursorPage" resultType="com.mall.entity.Order">
+        SELECT * FROM `order`
+        <where>
+            AND deleted = 0
+            <if test="status != null">AND order_status = #{status}</if>
+            <if test="orderNo != null and orderNo != ''">AND order_no LIKE CONCAT('%', #{orderNo}, '%')</if>
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="cursorTime != null">
+                AND (create_time <![CDATA[ < ]]> #{cursorTime} OR (create_time = #{cursorTime} AND id <![CDATA[ < ]]>
+                #{cursorId}))
+            </if>
+        </where>
+        ORDER BY create_time DESC, id DESC
+        LIMIT #{limit}
+    </select>
 </mapper>

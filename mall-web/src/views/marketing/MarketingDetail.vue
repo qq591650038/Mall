@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { getActivityDetail, getActivityItems, participate } from '@/api/marketing'
-import type { MarketingActivity, MarketingActivityItem } from '@/types'
+import {computed, onMounted, onUnmounted, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {getActivityDetail, getActivityItems, participate} from '@/api/marketing'
+import type {MarketingActivity, MarketingActivityItem} from '@/types'
 import AppHeader from '@/layouts/AppHeader.vue'
 import AppFooter from '@/layouts/AppFooter.vue'
 
@@ -222,7 +222,7 @@ onUnmounted(() => {
                   </span>
                 </div>
                 <div class="stock-row">
-                  <span class="stock-label">{{ formatStock(item.stock) }}</span>
+                  <span class="stock-label">{{ formatStock(item.remainingStock ?? item.stock) }}</span>
                   <div v-if="item.soldCount" class="sold-info">
                     已售 {{ item.soldCount }} 件
                   </div>
@@ -231,10 +231,12 @@ onUnmounted(() => {
                   type="danger"
                   size="large"
                   round
-                  :disabled="item.stock <= 0 || activity.status !== 1"
+                  :disabled="(item.remainingStock ?? item.stock) <= 0 || activity.status !== 1"
                   @click="handleBuy(item)"
                 >
-                  {{ item.stock <= 0 ? '已售罄' : activity.status !== 1 ? '活动未开始' : '立即抢购' }}
+                  {{
+                    (item.remainingStock ?? item.stock) <= 0 ? '已售罄' : activity.status !== 1 ? '活动未开始' : '立即抢购'
+                  }}
                 </el-button>
               </div>
             </div>

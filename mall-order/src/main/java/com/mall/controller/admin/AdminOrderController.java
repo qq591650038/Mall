@@ -1,6 +1,7 @@
 package com.mall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mall.common.result.CursorPageResult;
 import com.mall.common.result.PageResult;
 import com.mall.common.result.Result;
 import com.mall.entity.OrderItem;
@@ -35,6 +36,16 @@ public class AdminOrderController {
         Page<OrderVO> orderPage = orderService.page(current,size,orderStatus,orderNo,userId);
         PageResult<OrderVO> result = new PageResult<>(orderPage.getTotal(), orderPage.getRecords(), current, size);
         return Result.success(result);
+    }
+
+    @GetMapping("/cursor")
+    public Result<CursorPageResult<OrderVO>> cursorPage(
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(required = false) Integer orderStatus,
+            @RequestParam(required = false) String orderNo,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String cursor) {
+        return Result.success(orderService.cursorPage(size, orderStatus, orderNo, userId, cursor));
     }
 
     @GetMapping("/{id}")

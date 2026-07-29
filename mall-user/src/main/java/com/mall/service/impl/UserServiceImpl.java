@@ -1,6 +1,8 @@
 package com.mall.service.impl;
 
+import com.mall.common.result.CursorPageResult;
 import com.mall.common.result.ErrorCode;
+import com.mall.common.util.CursorCodec;
 import com.mall.dto.LoginDTO;
 import com.mall.dto.RegisterDTO;
 import com.mall.dto.UpdateUserDTO;
@@ -141,6 +143,18 @@ public class UserServiceImpl implements UserService {
         user.setEmail(updateUserDTO.getEmail());
         user.setUpdateTime(LocalDateTime.now());
         userMapper.updateById(user);
+    }
+
+    @Override
+    public CursorPageResult<UserVO> cursorPageForAdmin(Integer size, String keyword, Integer status, String cursor) {
+        int limit = Math.min(Math.max(size == null ? 20 : size, 1), 100) + 1;
+        CursorCodec.Decoded decoded = CursorCodec.decode(cursor);
+        java.util.List<User> rows = userMapper.selectAdminCursorPage(keyword, status,
+                decoded == null ? null : decoded.createTime(), decoded == null ? null : decoded.id(), limit);
+        boolean hasNext = rows.size() == limit;
+        java.util.List<User> users = hasNext ? rows.subList(0, limit - 1) : rows;
+        String nextCursor = hasNext ? CursorCodec.encode(users.get(users.size() - 1).getCreateTime(), users.get(users.size() - 1).getId()) : null;
+        return new CursorPageResult<>(users.stream().map(this::convertToUserVO).toList(), nextCursor, hasNext);
     }
 
     @Override

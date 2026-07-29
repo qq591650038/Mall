@@ -1,12 +1,12 @@
 package com.mall.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mall.dto.LoginDTO;
 import com.mall.dto.RegisterDTO;
 import com.mall.dto.UpdateUserDTO;
 import com.mall.entity.User;
 import com.mall.vo.LoginVO;
 import com.mall.vo.UserVO;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 public interface UserService {
     void register(RegisterDTO registerDTO);
@@ -20,6 +20,8 @@ public interface UserService {
     void updateUserInfo(Long userId, UpdateUserDTO updateUserDTO);
 
     Page<UserVO> pageForAdmin(Integer current, Integer size, String keyword, Integer status);
+
+    com.mall.common.result.CursorPageResult<UserVO> cursorPageForAdmin(Integer size, String keyword, Integer status, String cursor);
 
     UserVO getUserInfoForAdmin(Long userId);
 

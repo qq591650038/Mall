@@ -1,6 +1,7 @@
 package com.mall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mall.common.result.CursorPageResult;
 import com.mall.common.result.PageResult;
 import com.mall.common.result.Result;
 import com.mall.service.RefundService;
@@ -32,6 +33,15 @@ public class AdminRefundController {
         Page<RefundVO> page = refundService.pageAdmin(current, size, status, orderNo);
         PageResult<RefundVO> result = new PageResult<>(page.getTotal(), page.getRecords(), current, size);
         return Result.success(result);
+    }
+
+    @GetMapping("/cursor")
+    public Result<CursorPageResult<RefundVO>> cursorPage(
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String orderNo,
+            @RequestParam(required = false) String cursor) {
+        return Result.success(refundService.cursorPageAdmin(size, status, orderNo, cursor));
     }
 
     @GetMapping("/{id}")

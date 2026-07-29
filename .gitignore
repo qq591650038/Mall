@@ -1,58 +1,128 @@
-# ===== Java / Maven =====
+# ========================
+# OS generated files
+# ========================
+.DS_Store
+.DS_Store?
+._*
+ehthumbs.db
+ehthumbs.db?
+Thumbs.db
+Thumbs.db?
+Desktop.ini
+$RECYCLE.BIN/
+*.swp
+*.swo
+*~
+
+# ========================
+# IDE files
+# ========================
+# IntelliJ IDEA / WebStorm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+
+# Eclipse / STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ========================
+# Java / Maven
+# ========================
 target/
+!**/src/main/**/target/
+!**/src/test/**/target/
 *.class
 *.jar
 *.war
 *.ear
 *.nar
 hs_err_pid*
+replay_pid*
 
-# ===== Node / Vite / Vue =====
+# ========================
+# Node.js / Frontend
+# ========================
 node_modules/
+!**/src/main/**/node_modules/
+!**/src/test/**/node_modules/
 dist/
-dist-ssr/
-*.local
-.vite/
-coverage/
+!**/src/main/**/dist/
+!**/src/test/**/dist/
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
 
-# ===== IDE =====
-.idea/
-*.iml
-*.ipr
-*.iws
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-
-# ===== Environment and local configuration =====
-.env
-.env.*
-!.env.example
-application-local.yml
-application-local.yaml
-application-local.properties
-temp_*.json
-
-# ===== Logs and runtime files =====
+# Log files
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Misc
+.bundle
+dev
+.out
+*.tsbuildinfo
+.next/
+.nuxt/
+.output/
+.data/
+
+# ========================
+# Environment & Config
+# ========================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.staging
+application-local.yml
+application-local.properties
+
+# ========================
+# Build output
+# ========================
+build/
+out/
+dist/
+
+# ========================
+# Database
+# ========================
+*.sql.bak
+*.sql.gz
+
+# ========================
+# Logs & Temp
+# ========================
 logs/
-*.pid
-
-# ===== Database / local data =====
-*.db
-*.sqlite
-*.sqlite3
-
-# ===== OS generated files =====
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-# ===== Temporary files =====
+log/
+tmp/
+temp/
 *.tmp
-*.temp
-*.swp
-*.swo
-*~

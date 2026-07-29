@@ -29,6 +29,11 @@ public class MarketingActivityItemVO {
 
     private Integer soldCount;
 
+    /**
+     * 剩余库存（计算字段：stock - soldCount）
+     */
+    private Integer remainingStock;
+
     private Integer limitPerUser;
 
     private Integer status;

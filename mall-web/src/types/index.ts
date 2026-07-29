@@ -388,6 +388,7 @@ export interface MarketingActivityItem {
   activityPrice: number
   originalPrice: number
   stock: number
+    remainingStock?: number
   limitPerUser?: number
   productName?: string
   productImage?: string

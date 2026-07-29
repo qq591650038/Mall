@@ -1,5 +1,6 @@
-import { request } from '@/utils/request'
-import type { PageResult, RefundVO } from '@/types'
+import {request} from '@/utils/request'
+import type {PageResult, RefundVO} from '@/types'
+import type {CursorPage} from './order'
 
 export function getRefundPage(params: { current: number; size: number; status?: number; orderNo?: string }) {
   return request<PageResult<RefundVO>>({
@@ -7,6 +8,10 @@ export function getRefundPage(params: { current: number; size: number; status?: 
     method: 'get',
     params
   })
+}
+
+export function getRefundCursorPage(params: { size: number; status?: number; orderNo?: string; cursor?: string }) {
+    return request<CursorPage<RefundVO>>({url: '/refunds/cursor', method: 'get', params})
 }
 
 export function getRefundById(id: number) {

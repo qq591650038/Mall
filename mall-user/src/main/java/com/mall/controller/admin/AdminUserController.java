@@ -1,6 +1,7 @@
 package com.mall.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mall.common.result.CursorPageResult;
 import com.mall.common.result.PageResult;
 import com.mall.common.result.Result;
 import com.mall.service.UserService;
@@ -23,6 +24,14 @@ public class AdminUserController {
                                             @RequestParam(required = false) Integer status) {
         Page<UserVO> page = userService.pageForAdmin(current, size, keyword, status);
         return Result.success(new PageResult<>(page.getTotal(), page.getRecords(), current, size));
+    }
+
+    @GetMapping("/cursor")
+    public Result<CursorPageResult<UserVO>> cursorPage(@RequestParam(defaultValue = "20") Integer size,
+                                                       @RequestParam(required = false) String keyword,
+                                                       @RequestParam(required = false) Integer status,
+                                                       @RequestParam(required = false) String cursor) {
+        return Result.success(userService.cursorPageForAdmin(size, keyword, status, cursor));
     }
 
     @GetMapping("/{id}")

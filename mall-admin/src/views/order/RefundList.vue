@@ -1,176 +1,176 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { getRefundPage, reviewRefund, completeRefund } from '@/api/refund'
+import {onMounted, ref} from 'vue'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {completeRefund, getRefundCursorPage, reviewRefund} from '@/api/refund'
 
 const loading = ref(false)
 const refunds = ref<any[]>([])
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(10)
-const filterStatus = ref<number | undefined>(undefined)
-const searchOrderNo = ref('')
-
-const reviewDialogVisible = ref(false)
-const currentRefund = ref<any>(null)
-const reviewForm = ref({ status: 1, remark: '' })
-
-const statusMap: Record<number, { text: string; type: string }> = {
-  0: { text: '待审核', type: 'warning' },
-  1: { text: '审核通过', type: 'primary' },
-  2: { text: '退款中', type: 'info' },
-  3: { text: '已退款', type: 'success' },
-  4: { text: '已拒绝', type: 'danger' },
-  5: { text: '退货中', type: 'warning' },
-  6: { text: '换货中', type: 'primary' },
-  7: { text: '退款失败', type: 'danger' }
+const size = ref(20)
+const status = ref<number>()
+const orderNo = ref('')
+const cursor = ref<string>()
+const nextCursor = ref<string>()
+const history = ref<string[]>([])
+const page = ref(1)
+const dialog = ref(false)
+const current = ref<any>()
+const review = ref({status: 1, remark: ''})
+const statusMap: Record<number, { text: string; type: any }> = {
+  0: {text: 'Pending', type: 'warning'}, 1: {text: 'Approved', type: 'primary'},
+  2: {text: 'Refunding', type: 'info'}, 3: {text: 'Refunded', type: 'success'},
+  4: {text: 'Rejected', type: 'danger'}, 5: {text: 'Returning', type: 'warning'},
+  6: {text: 'Exchanging', type: 'primary'}, 7: {text: 'Failed', type: 'danger'}
 }
 
-async function loadRefunds() {
+async function load() {
   loading.value = true
   try {
-    const res = await getRefundPage({
-      current: currentPage.value,
-      size: pageSize.value,
-      status: filterStatus.value,
-      orderNo: searchOrderNo.value
+    const result = await getRefundCursorPage({
+      size: size.value,
+      status: status.value,
+      orderNo: orderNo.value || undefined,
+      cursor: cursor.value
     })
-    refunds.value = res?.list || []
-    total.value = res?.total || 0
-  } catch { refunds.value = [] }
-  finally { loading.value = false }
+    refunds.value = result.list || []
+    nextCursor.value = result.nextCursor
+  } finally {
+    loading.value = false
+  }
 }
 
-function openReviewDialog(refund: any, status: number) {
-  currentRefund.value = refund
-  reviewForm.value = { status, remark: '' }
-  reviewDialogVisible.value = true
+function search() {
+  cursor.value = undefined;
+  nextCursor.value = undefined;
+  history.value = [];
+  page.value = 1;
+  load()
 }
 
-async function handleReview() {
-  if (!currentRefund.value) return
-  try {
-    await ElMessageBox.confirm(
-      reviewForm.value.status === 1 ? '确认审核通过？' : '确认拒绝此退款申请？',
-      '提示'
-    )
-    await reviewRefund(currentRefund.value.id, reviewForm.value.status, reviewForm.value.remark)
-    ElMessage.success('审核完成')
-    reviewDialogVisible.value = false
-    loadRefunds()
-  } catch { /* cancelled */ }
+function next() {
+  if (!nextCursor.value) return;
+  history.value.push(cursor.value || '');
+  cursor.value = nextCursor.value;
+  page.value++;
+  load()
 }
 
-async function handleComplete(refund: any) {
-  try {
-    await ElMessageBox.confirm('确认退款已完成？', '提示')
-    await completeRefund(refund.id)
-    ElMessage.success('退款已完成')
-    loadRefunds()
-  } catch { /* cancelled */ }
+function previous() {
+  const previous = history.value.pop();
+  if (previous === undefined) return;
+  cursor.value = previous || undefined;
+  page.value--;
+  load()
 }
 
-onMounted(loadRefunds)
+function openReview(row: any, nextStatus: number) {
+  current.value = row;
+  review.value = {status: nextStatus, remark: ''};
+  dialog.value = true
+}
+
+async function submitReview() {
+  if (!current.value) return;
+  await reviewRefund(current.value.id, review.value.status, review.value.remark);
+  ElMessage.success('Review completed');
+  dialog.value = false;
+  load()
+}
+
+async function complete(row: any) {
+  await ElMessageBox.confirm('Confirm refund completion?', 'Confirm');
+  await completeRefund(row.id);
+  ElMessage.success('Refund completed');
+  load()
+}
+
+onMounted(load)
 </script>
 
 <template>
   <div class="refund-page">
-    <div class="page-header">
-      <h2>退款管理</h2>
-    </div>
-
+    <div class="page-header"><h2>Refund Management</h2></div>
     <div class="filter-bar">
-      <el-select v-model="filterStatus" placeholder="退款状态" clearable style="width: 150px">
-        <el-option v-for="(v, k) in statusMap" :key="k" :label="v.text" :value="Number(k)" />
+      <el-select v-model="status" clearable placeholder="Status" style="width: 150px">
+        <el-option v-for="(value, key) in statusMap" :key="key" :label="value.text" :value="Number(key)"/>
       </el-select>
-      <el-input v-model="searchOrderNo" placeholder="订单编号" clearable style="width: 200px" />
-      <el-button type="primary" @click="loadRefunds">查询</el-button>
+      <el-input v-model="orderNo" clearable placeholder="Order number" style="width: 200px" @keyup.enter="search"/>
+      <el-button type="primary" @click="search">Search</el-button>
     </div>
-
     <div class="table-card">
       <el-table :data="refunds" v-loading="loading" border>
-        <el-table-column prop="refundNo" label="退款单号" width="180" />
-        <el-table-column prop="orderNo" label="订单编号" width="200" />
-        <el-table-column prop="username" label="用户" width="120" />
-        <el-table-column prop="amount" label="退款金额" width="120">
-          <template #default="{ row }">
-            <span style="color: #ff6b35; font-weight: 600">¥{{ row.amount?.toFixed(2) }}</span>
-          </template>
+        <el-table-column label="Refund No." prop="refundNo" width="180"/>
+        <el-table-column label="Order No." prop="orderNo" width="200"/>
+        <el-table-column label="User" prop="username" width="120"/>
+        <el-table-column label="Amount" prop="amount" width="120">
+          <template #default="{ row }">¥{{ row.amount?.toFixed(2) }}</template>
         </el-table-column>
-        <el-table-column prop="reason" label="退款原因" show-overflow-tooltip />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column label="Reason" prop="reason" show-overflow-tooltip/>
+        <el-table-column label="Status" width="110">
           <template #default="{ row }">
             <el-tag :type="statusMap[row.status]?.type">{{ statusMap[row.status]?.text }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="申请时间" width="170" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="Created" prop="createTime" width="170"/>
+        <el-table-column fixed="right" label="Actions" width="200">
           <template #default="{ row }">
-            <el-button
-              v-if="row.status === 0"
-              type="success"
-              size="small"
-              @click="openReviewDialog(row, 1)"
-            >通过</el-button>
-            <el-button
-              v-if="row.status === 0"
-              type="danger"
-              size="small"
-              @click="openReviewDialog(row, 4)"
-            >拒绝</el-button>
-            <el-button
-              v-if="row.status === 2 || row.status === 5"
-              type="primary"
-              size="small"
-              @click="handleComplete(row)"
-            >完成退款</el-button>
+            <el-button v-if="row.status === 0" size="small" type="success" @click="openReview(row, 1)">Approve
+            </el-button>
+            <el-button v-if="row.status === 0" size="small" type="danger" @click="openReview(row, 4)">Reject</el-button>
+            <el-button v-if="row.status === 2 || row.status === 5" size="small" type="primary" @click="complete(row)">
+              Complete
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        v-if="total > 0"
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :total="total"
-        :page-sizes="[10, 20, 50]"
-        layout="total, sizes, prev, pager, next"
-        @size-change="loadRefunds"
-        @current-change="loadRefunds"
-        style="margin-top: 16px; justify-content: flex-end"
-      />
+      <div class="pagination"><span>Page {{ page }}</span>
+        <el-button :disabled="loading || !history.length" @click="previous">Previous</el-button>
+        <el-button :disabled="loading || !nextCursor" type="primary" @click="next">Next</el-button>
+      </div>
     </div>
-
-    <el-dialog v-model="reviewDialogVisible" title="审核退款申请" width="500px">
-      <el-form :model="reviewForm" label-width="100px">
-        <el-form-item label="审核结果">
-          <el-tag :type="reviewForm.status === 1 ? 'success' : 'danger'">
-            {{ reviewForm.status === 1 ? '通过' : '拒绝' }}
+    <el-dialog v-model="dialog" title="Review refund" width="500px">
+      <el-form :model="review" label-width="100px">
+        <el-form-item label="Result">
+          <el-tag :type="review.status === 1 ? 'success' : 'danger'">{{
+              review.status === 1 ? 'Approved' : 'Rejected'
+            }}
           </el-tag>
         </el-form-item>
-        <el-form-item label="审核备注">
-          <el-input v-model="reviewForm.remark" type="textarea" :rows="3" placeholder="请输入审核备注" />
+        <el-form-item label="Remark">
+          <el-input v-model="review.remark" :rows="3" type="textarea"/>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="reviewDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleReview">确认</el-button>
+        <el-button @click="dialog = false">Cancel</el-button>
+        <el-button type="primary" @click="submitReview">Confirm</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
-<style scoped lang="scss">
-.refund-page { padding: 20px; }
-.page-header { margin-bottom: 20px; h2 { margin: 0; } }
-.filter-bar {
+<style lang="scss" scoped>.refund-page {
+  padding: 20px
+}
+
+.page-header {
+  margin-bottom: 20px
+}
+
+.filter-bar, .pagination {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
-  align-items: center;
+  align-items: center
 }
+
+.filter-bar {
+  margin-bottom: 20px
+}
+
 .table-card {
-  background: #fff;
-  border-radius: 8px;
   padding: 20px;
+  background: #fff
 }
-</style>
+
+.pagination {
+  justify-content: flex-end;
+  margin-top: 16px
+}</style>

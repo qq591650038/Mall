@@ -93,8 +93,8 @@ public class FavoriteAlertScheduler {
                     && product.getPrice().compareTo(favorite.getLastPrice()) < 0) {
                 BigDecimal oldPrice = favorite.getLastPrice();
                 BigDecimal newPrice = product.getPrice();
-                notificationService.notify(favorite.getUserId(), "PRICE_ALERT", "\u5173\u6ce8\u5546\u54c1\u964d\u4ef7\u5566\uff01",
-                        String.format("\u60a8\u6536\u85cf\u7684\u300c%s\u300d\u964d\u4ef7\u4e86\uff0c\u539f\u4ef7\uffe5%s\uff0c\u73b0\u4ef7\uffe5%s\uff0c\u5feb\u6765\u770b\u770b\u5427\uff01",
+                notificationService.notify(favorite.getUserId(), "PRICE_ALERT", "关注商品降价啦！",
+                        String.format("您收藏的「%s」降价了，原价￥%s，现价￥%s，点击查看详情吧！",
                                 product.getName(), oldPrice, newPrice),
                         "PRODUCT", product.getId());
                 favorite.setLastPrice(newPrice);

@@ -3,46 +3,36 @@ package com.mall.service.impl;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mall.common.result.CursorPageResult;
 import com.mall.common.result.ErrorCode;
 import com.mall.common.result.OrderStatus;
 import com.mall.common.result.RefundStatus;
+import com.mall.common.util.CursorCodec;
 import com.mall.dto.order.RefundCallbackDTO;
 import com.mall.entity.Order;
 import com.mall.entity.Payment;
 import com.mall.entity.Refund;
 import com.mall.entity.User;
 import com.mall.exception.BusinessException;
-import com.mall.mapper.OrderMapper;
-import com.mall.mapper.PaymentMapper;
-import com.mall.mapper.RefundMapper;
-import com.mall.mapper.OrderItemMapper;
-import com.mall.mapper.ProductMapper;
-import com.mall.mapper.UserMapper;
-import com.mall.service.RefundService;
-import com.mall.service.CouponService;
-import com.mall.service.NotificationService;
-import com.mall.service.InventoryService;
-import com.mall.service.MarketingActivityService;
-import com.mall.service.PointsService;
-import com.mall.vo.OrderVO;
+import com.mall.mapper.*;
+import com.mall.service.*;
 import com.mall.vo.RefundVO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.HexFormat;
 import java.security.MessageDigest;
 import java.time.Instant;
-
 import java.time.LocalDateTime;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
-import java.math.BigDecimal;
 
 @Slf4j
 @Service
@@ -60,6 +50,7 @@ public class RefundServiceImpl implements RefundService {
     private final MarketingActivityService marketingActivityService;
     private final PointsService pointsService;
     private final String callbackSecret;
+    private final UserSpendingMapper userSpendingMapper;
 
     public RefundServiceImpl(RefundMapper refundMapper,
                              OrderMapper orderMapper,
@@ -72,6 +63,7 @@ public class RefundServiceImpl implements RefundService {
                              InventoryService inventoryService,
                              MarketingActivityService marketingActivityService,
                              PointsService pointsService,
+                             UserSpendingMapper userSpendingMapper,
                              @Value("${payment.callback-secret}") String callbackSecret) {
         this.refundMapper = refundMapper;
         this.orderMapper = orderMapper;
@@ -84,6 +76,7 @@ public class RefundServiceImpl implements RefundService {
         this.inventoryService = inventoryService;
         this.marketingActivityService = marketingActivityService;
         this.pointsService = pointsService;
+        this.userSpendingMapper = userSpendingMapper;
         this.callbackSecret = callbackSecret;
     }
 
@@ -252,6 +245,27 @@ public class RefundServiceImpl implements RefundService {
     }
 
     @Override
+    public CursorPageResult<RefundVO> cursorPageAdmin(Integer size, Integer status, String orderNo, String cursor) {
+        int limit = Math.min(Math.max(size == null ? 20 : size, 1), 100) + 1;
+        CursorCodec.Decoded decoded = CursorCodec.decode(cursor);
+        List<Refund> rows = refundMapper.selectAdminCursorPage(status, orderNo,
+                decoded == null ? null : decoded.createTime(), decoded == null ? null : decoded.id(), limit);
+        boolean hasNext = rows.size() == limit;
+        List<Refund> records = hasNext ? rows.subList(0, limit - 1) : rows;
+        if (records.isEmpty()) return new CursorPageResult<>(List.of(), null, false);
+        List<Long> userIds = records.stream().map(Refund::getUserId).filter(java.util.Objects::nonNull).distinct().toList();
+        Map<Long, String> usernames = userMapper.selectBatchIds(userIds).stream()
+                .collect(java.util.stream.Collectors.toMap(User::getId, User::getUsername, (a, b) -> a));
+        List<RefundVO> values = records.stream().map(refund -> {
+            RefundVO value = convertToVO(refund);
+            value.setUsername(usernames.getOrDefault(refund.getUserId(), "Unknown user"));
+            return value;
+        }).toList();
+        Refund last = records.get(records.size() - 1);
+        return new CursorPageResult<>(values, hasNext ? CursorCodec.encode(last.getCreateTime(), last.getId()) : null, hasNext);
+    }
+
+    @Override
     public Page<RefundVO> pageAdmin(Integer current, Integer size, Integer status, String orderNo) {
         Page<Refund> page = new Page<>(current, size);
         QueryWrapper<Refund> wrapper = new QueryWrapper<>();
@@ -386,11 +400,8 @@ public class RefundServiceImpl implements RefundService {
 
         Order order = orderMapper.selectById(refund.getOrderId());
         if (order != null) {
-            BigDecimal refundedAmount = refundMapper.selectList(
-                            new QueryWrapper<Refund>().eq("order_id", refund.getOrderId())
-                                    .eq("status", RefundStatus.REFUNDED.getCode()))
-                    .stream().map(Refund::getAmount).filter(java.util.Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal refundedAmount = refundMapper.sumRefundedAmountByOrderId(refund.getOrderId());
+            userSpendingMapper.adjust(refund.getUserId(), refund.getAmount().negate());
             boolean fullyRefunded = refundedAmount.compareTo(order.getPayAmount()) >= 0;
             if (fullyRefunded && !OrderStatus.REFUNDED.getCode().equals(order.getOrderStatus())) {
                 orderItemMapper.selectList(new QueryWrapper<com.mall.entity.OrderItem>().eq("order_id", order.getId()))

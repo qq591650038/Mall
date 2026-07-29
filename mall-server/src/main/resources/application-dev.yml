@@ -17,6 +17,10 @@ spring:
       password: ${REDIS_PASSWORD:}
       database: 0
 
+rocketmq:
+  enabled: ${ROCKETMQ_ENABLED:true}
+  name-server: ${ROCKETMQ_NAME_SERVER:127.0.0.1:9876}
+
 logging:
   level:
     com.mall: debug

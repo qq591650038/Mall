@@ -7,6 +7,111 @@ CREATE DATABASE IF NOT EXISTS mall DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4
 
 USE mall;
 
+CREATE TABLE IF NOT EXISTS `daily_business_stats`
+(
+    `stat_date`
+    DATE
+    NOT
+    NULL,
+    `order_count`
+    BIGINT
+    NOT
+    NULL
+    DEFAULT
+    0,
+    `paid_order_count`
+    BIGINT
+    NOT
+    NULL
+    DEFAULT
+    0,
+    `paid_user_count`
+    BIGINT
+    NOT
+    NULL
+    DEFAULT
+    0,
+    `sales_amount`
+    DECIMAL
+(
+    18,
+    2
+) NOT NULL DEFAULT 0.00,
+    `refund_count` BIGINT NOT NULL DEFAULT 0,
+    `refund_amount` DECIMAL
+(
+    18,
+    2
+) NOT NULL DEFAULT 0.00,
+    `visitor_count` BIGINT NOT NULL DEFAULT 0,
+    `new_user_count` BIGINT NOT NULL DEFAULT 0,
+    PRIMARY KEY
+(
+    `stat_date`
+)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Daily business analytics';
+
+CREATE TABLE IF NOT EXISTS `seckill_request`
+(
+    `request_id`
+    VARCHAR
+(
+    64
+) NOT NULL,
+    `activity_id` BIGINT NOT NULL,
+    `activity_item_id` BIGINT NOT NULL,
+    `user_id` BIGINT NOT NULL,
+    `quantity` INT NOT NULL,
+    `address_id` BIGINT NOT NULL,
+    `status` TINYINT NOT NULL DEFAULT 0,
+    `order_id` BIGINT DEFAULT NULL,
+    `error_message` VARCHAR
+(
+    500
+) DEFAULT NULL,
+    `compensated` TINYINT NOT NULL DEFAULT 0,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY
+(
+    `request_id`
+),
+    KEY `idx_seckill_request_user_time`
+(
+    `user_id`,
+    `create_time`
+),
+    KEY `idx_seckill_request_status_time`
+(
+    `status`,
+    `create_time`
+)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Async seckill order requests';
+
+CREATE TABLE IF NOT EXISTS `user_spending`
+(
+    `user_id`
+    BIGINT
+    NOT
+    NULL,
+    `total_amount`
+    DECIMAL
+(
+    18,
+    2
+) NOT NULL DEFAULT 0.00,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY
+(
+    `user_id`
+),
+    KEY `idx_user_spending_amount_user`
+(
+    `total_amount`,
+    `user_id`
+)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='User net spending total';
+
 CREATE TABLE IF NOT EXISTS `inventory_log` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `sku_id` BIGINT NOT NULL, `product_id` BIGINT NOT NULL, `order_id` BIGINT DEFAULT NULL,

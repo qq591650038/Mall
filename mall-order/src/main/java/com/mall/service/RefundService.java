@@ -9,6 +9,8 @@ public interface RefundService {
     RefundVO getById(Long id, Long userId);
     Page<RefundVO> pageByUserId(Long userId, Integer current, Integer size, Integer status);
     Page<RefundVO> pageAdmin(Integer current, Integer size, Integer status, String orderNo);
+
+    com.mall.common.result.CursorPageResult<RefundVO> cursorPageAdmin(Integer size, Integer status, String orderNo, String cursor);
     void review(Long id, Integer status, String remark);
     void refundSuccess(Long id); void cancel(Long id, Long userId); void refundFailed(Long id, String reason); void callback(RefundCallbackDTO callback);
 

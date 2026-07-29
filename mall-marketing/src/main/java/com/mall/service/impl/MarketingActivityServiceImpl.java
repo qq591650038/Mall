@@ -1,24 +1,18 @@
 package com.mall.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mall.common.result.ErrorCode;
 import com.mall.entity.*;
 import com.mall.exception.BusinessException;
 import com.mall.mapper.*;
 import com.mall.service.MarketingActivityService;
-import com.mall.vo.MarketingActivityItemVO;
-import com.mall.vo.MarketingParticipateVO;
-import com.mall.vo.MarketingGroupVO;
-import com.mall.vo.MarketingGroupMemberVO;
-import com.mall.vo.GroupPaymentResult;
+import com.mall.vo.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -236,12 +230,19 @@ public class MarketingActivityServiceImpl implements MarketingActivityService {
             vo.setSkuId(item.getSkuId());
             vo.setActivityPrice(item.getActivityPrice());
             vo.setOriginalPrice(item.getOriginalPrice());
+
             int activityStock = item.getStock() == null ? 0 : item.getStock();
+            int soldCount = item.getSoldCount() == null ? 0 : item.getSoldCount();
+            // 活动商品的剩余库存 = 活动配置库存 - 已售数量
+            int remainingActivityStock = Math.max(0, activityStock - soldCount);
+            // 同时不能超过 SKU 实际库存
             ProductSku sku = item.getSkuId() == null ? null : productSkuMapper.selectById(item.getSkuId());
-            int availableStock = sku == null || sku.getStock() == null
-                    ? activityStock : Math.min(activityStock, sku.getStock());
-            vo.setStock(Math.max(0, availableStock));
-            vo.setSoldCount(item.getSoldCount());
+            int skuStock = (sku == null || sku.getStock() == null) ? Integer.MAX_VALUE : sku.getStock();
+            int remainingStock = Math.max(0, Math.min(remainingActivityStock, skuStock));
+
+            vo.setStock(remainingStock);
+            vo.setSoldCount(soldCount);
+            vo.setRemainingStock(remainingStock);
             vo.setLimitPerUser(item.getLimitPerUser());
             vo.setStatus(item.getStatus());
             Product product = productMap.get(item.getProductId());

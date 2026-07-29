@@ -1,22 +1,20 @@
 package com.mall.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.mall.common.result.OrderStatus;
-import com.mall.entity.Order;
 import com.mall.entity.PointsAccount;
 import com.mall.entity.Product;
 import com.mall.entity.User;
-import com.mall.mapper.OrderMapper;
+import com.mall.entity.UserSpending;
 import com.mall.mapper.PointsAccountMapper;
 import com.mall.mapper.ProductMapper;
 import com.mall.mapper.UserMapper;
+import com.mall.mapper.UserSpendingMapper;
 import com.mall.service.LeaderboardService;
 import com.mall.vo.LeaderboardVO;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,18 +27,18 @@ public class LeaderboardServiceImpl implements LeaderboardService {
     private static final int TOP_LIMIT = 20;
 
     private final PointsAccountMapper pointsAccountMapper;
-    private final OrderMapper orderMapper;
     private final ProductMapper productMapper;
     private final UserMapper userMapper;
+    private final UserSpendingMapper userSpendingMapper;
 
     public LeaderboardServiceImpl(PointsAccountMapper pointsAccountMapper,
-                                  OrderMapper orderMapper,
                                   ProductMapper productMapper,
-                                  UserMapper userMapper) {
+                                  UserMapper userMapper,
+                                  UserSpendingMapper userSpendingMapper) {
         this.pointsAccountMapper = pointsAccountMapper;
-        this.orderMapper = orderMapper;
         this.productMapper = productMapper;
         this.userMapper = userMapper;
+        this.userSpendingMapper = userSpendingMapper;
     }
 
     @Override
@@ -63,18 +61,13 @@ public class LeaderboardServiceImpl implements LeaderboardService {
     }
 
     private List<LeaderboardVO.UserEntry> getSpendingRanking() {
-        List<Map<String, Object>> rows = orderMapper.selectMaps(new QueryWrapper<Order>()
-                .select("user_id", "COALESCE(SUM(pay_amount), 0) AS total_amount")
-                .eq("pay_status", 1)
-                .in("order_status", paidStatuses())
-                .groupBy("user_id")
+        List<UserSpending> rows = userSpendingMapper.selectList(new QueryWrapper<UserSpending>()
+                .gt("total_amount", 0)
                 .orderByDesc("total_amount")
                 .orderByAsc("user_id")
                 .last("LIMIT " + TOP_LIMIT));
-        List<Long> userIds = rows.stream().map(row -> ((Number) row.get("user_id")).longValue()).toList();
-        List<BigDecimal> amounts = rows.stream()
-                .map(row -> new BigDecimal(String.valueOf(row.get("total_amount"))))
-                .toList();
+        List<Long> userIds = rows.stream().map(UserSpending::getUserId).toList();
+        List<BigDecimal> amounts = rows.stream().map(UserSpending::getTotalAmount).toList();
         return toUserEntries(userIds, amounts);
     }
 
@@ -134,7 +127,4 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         return name.charAt(0) + "***" + name.charAt(name.length() - 1);
     }
 
-    private Collection<Integer> paidStatuses() {
-        return List.of(OrderStatus.PAID.getCode(), OrderStatus.SHIPPED.getCode(), OrderStatus.COMPLETED.getCode());
-    }
 }

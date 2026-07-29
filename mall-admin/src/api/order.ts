@@ -1,5 +1,5 @@
-import { request } from '@/utils/request'
-import type { OrderVO, PageResult } from '@/types'
+import {request} from '@/utils/request'
+import type {OrderVO, PageResult} from '@/types'
 
 export function getOrderPage(params: { current: number; size: number; orderStatus?: number; keyword?: string }) {
   return request<PageResult<OrderVO>>({
@@ -7,6 +7,22 @@ export function getOrderPage(params: { current: number; size: number; orderStatu
     method: 'get',
     params
   })
+}
+
+export interface CursorPage<T> {
+    list: T[];
+    nextCursor?: string;
+    hasNext: boolean
+}
+
+export function getOrderCursorPage(params: {
+    size: number;
+    orderStatus?: number;
+    orderNo?: string;
+    userId?: number;
+    cursor?: string
+}) {
+    return request<CursorPage<OrderVO>>({url: '/orders/cursor', method: 'get', params})
 }
 
 export function getOrderById(id: number) {

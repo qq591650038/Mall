@@ -1,5 +1,6 @@
-import { request } from '@/utils/request'
-import type { PageResult } from '@/types'
+import {request} from '@/utils/request'
+import type {PageResult} from '@/types'
+import type {CursorPage} from './order'
 
 export interface AdminUser {
   id: number
@@ -11,6 +12,10 @@ export interface AdminUser {
   createTime?: string
   lastLoginTime?: string
   lastLoginIp?: string
+}
+
+export function getUserCursorPage(params: { size: number; keyword?: string; status?: number; cursor?: string }) {
+    return request<CursorPage<AdminUser>>({url: '/users/cursor', method: 'get', params})
 }
 
 export function getUserPage(params: { current: number; size: number; keyword?: string; status?: number }) {
