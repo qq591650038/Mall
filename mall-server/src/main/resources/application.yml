@@ -1,0 +1,83 @@
+server:
+  port: 8080
+
+mall:
+  file:
+    root: ${FILE_ROOT:./uploads}
+  inventory:
+    retry-scan-ms: ${INVENTORY_RETRY_SCAN_MS:120000}
+  order:
+    pending-timeout-minutes: ${ORDER_PENDING_TIMEOUT_MINUTES:30}
+    cancel-scan-ms: ${ORDER_CANCEL_SCAN_MS:60000}
+
+spring:
+  application:
+    name: mall-server
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:db/migration
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mall?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:/mapper/**/*.xml
+
+jwt:
+  secret: ${JWT_SECRET:mall-jwt-secret-key-2024-secure-enough}
+  expiration: ${JWT_EXPIRATION:86400}
+  header: Authorization
+  prefix: "Bearer "
+
+payment:
+  callback-secret: ${PAYMENT_CALLBACK_SECRET:${random.uuid}}
+  mock-enabled: ${PAYMENT_MOCK_ENABLED:true}
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+logging:
+  level:
+    com.mall: debug
+    org.springframework.security: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

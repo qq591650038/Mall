@@ -1,0 +1,12 @@
+package com.mall.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.mall.entity.UserCoupon;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface UserCouponMapper extends BaseMapper<UserCoupon> {
+    int lock(Long id, Long userId, Long orderId);
+
+    int unlock(Long id);
+}

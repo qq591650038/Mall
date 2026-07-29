@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.mapper.UserCouponMapper">
+  <!-- 通过状态条件防止同一张优惠券被重复锁定。 -->
+  <update id="lock">
+    UPDATE user_coupon
+    SET status = 1, order_id = #{orderId}, use_time = NOW(), update_time = NOW()
+    WHERE id = #{id} AND user_id = #{userId} AND status = 0
+  </update>
+  <!-- 订单取消或失败时执行补偿，释放已锁定的优惠券。 -->
+  <update id="unlock">
+    UPDATE user_coupon
+    SET status = 0, use_time = NULL, order_id = NULL, update_time = NOW()
+    WHERE id = #{id} AND status = 1
+  </update>
+</mapper>

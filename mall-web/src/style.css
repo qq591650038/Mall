@@ -1,0 +1,37 @@
+:root {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #2f2a3a;
+  background: #f6f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { min-height: 100%; margin: 0; }
+body { min-width: 320px; background: #f6f7fb; }
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; }
+
+@media (max-width: 768px) {
+  .app-header .header-inner { height: auto !important; min-height: 64px; padding: 12px 16px !important; flex-wrap: wrap; gap: 10px !important; }
+  .app-header .header-left { gap: 14px !important; }
+  .app-header .nav { display: none !important; }
+  .app-header .header-center { order: 3; flex-basis: 100%; max-width: none !important; }
+  .app-header .header-right { margin-left: auto; gap: 8px !important; }
+  .app-header .username { display: none; }
+  .container { padding-left: 16px !important; padding-right: 16px !important; }
+  .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
+  .category-nav { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; padding: 12px !important; gap: 6px !important; }
+  .category-item { padding: 8px 2px !important; }
+  .category-item .category-icon { width: 38px !important; height: 38px !important; font-size: 18px !important; }
+  .banner-carousel { height: 190px !important; }
+  .banner-overlay { padding: 12px 20px !important; }
+  .banner-overlay h2 { font-size: 20px !important; }
+  .product-list-page .container { display: block !important; }
+  .product-list-page .sidebar { width: auto !important; margin-bottom: 12px; }
+  .product-list-page .category-list { flex-direction: row !important; overflow-x: auto; }
+  .product-list-page .category-item { white-space: nowrap; }
+  .product-list-page .filter-bar { flex-direction: column; align-items: stretch !important; gap: 10px; }
+  .product-list-page .filter-bar .el-input { width: 100% !important; }
+}

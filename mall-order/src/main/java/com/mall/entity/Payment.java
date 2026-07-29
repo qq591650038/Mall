@@ -1,0 +1,3 @@
+package com.mall.entity;
+import com.baomidou.mybatisplus.annotation.*; import lombok.Data; import java.io.Serializable; import java.math.BigDecimal; import java.time.LocalDateTime;
+@Data @TableName("payment") public class Payment implements Serializable { @TableId(type=IdType.AUTO) private Long id; private Long orderId; private String orderNo; private String paymentNo; private BigDecimal amount; private Integer paymentMethod; private Integer paymentStatus; private LocalDateTime paymentTime; private String remark; @TableField(fill=FieldFill.INSERT) private LocalDateTime createTime; @TableField(fill=FieldFill.INSERT_UPDATE) private LocalDateTime updateTime; }

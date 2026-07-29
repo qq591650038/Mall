@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.mapper.ProductMapper">
+  <select id="selectPublicPage" resultType="com.mall.entity.Product">
+    SELECT p.*, COALESCE(rs.review_count, 0) AS reviewCount, COALESCE(rs.average_rating, 0) AS averageRating
+    FROM product p
+    LEFT JOIN (
+      SELECT product_id, COUNT(*) AS review_count, ROUND(AVG(rating), 1) AS average_rating
+      FROM review WHERE deleted = 0 AND status = 1 AND parent_id = 0 GROUP BY product_id
+    ) rs ON rs.product_id = p.id
+    WHERE p.deleted = 0 AND p.status = 1
+    <if test="keyword != null and keyword != ''">AND (p.name LIKE CONCAT('%', #{keyword}, '%') OR p.subtitle LIKE CONCAT('%', #{keyword}, '%'))</if>
+    <if test="categoryId != null">AND p.category_id = #{categoryId}</if>
+    <if test="brandId != null">AND p.brand_id = #{brandId}</if>
+    <if test="minPrice != null">AND p.price &gt;= #{minPrice}</if>
+    <if test="maxPrice != null">AND p.price &lt;= #{maxPrice}</if>
+    <if test="minRating != null">AND COALESCE(rs.average_rating, 0) &gt;= #{minRating}</if>
+    <if test="inStock != null and inStock">AND p.total_stock &gt; 0</if>
+    <choose>
+      <when test="sort == 'sales'">ORDER BY p.sales DESC, p.id DESC</when>
+      <when test="sort == 'priceAsc'">ORDER BY p.price ASC, p.id DESC</when>
+      <when test="sort == 'priceDesc'">ORDER BY p.price DESC, p.id DESC</when>
+      <when test="sort == 'rating'">ORDER BY COALESCE(rs.average_rating, 0) DESC, COALESCE(rs.review_count, 0) DESC, p.id DESC</when>
+      <when test="sort == 'newest'">ORDER BY p.create_time DESC, p.id DESC</when>
+      <otherwise>ORDER BY p.is_recommend DESC, p.id DESC</otherwise>
+    </choose>
+  </select>
+  <select id="selectSuggestions" resultType="java.lang.String">
+    SELECT name FROM product WHERE deleted = 0 AND status = 1 AND name LIKE CONCAT('%', #{keyword}, '%')
+    ORDER BY sales DESC, id DESC LIMIT #{limit}
+  </select>
+  <select id="selectRelated" resultType="com.mall.entity.Product">
+    SELECT p.*, COALESCE(rs.review_count, 0) AS reviewCount, COALESCE(rs.average_rating, 0) AS averageRating
+    FROM product p
+    LEFT JOIN (SELECT product_id, COUNT(*) review_count, ROUND(AVG(rating),1) average_rating FROM review WHERE deleted=0 AND status=1 AND parent_id=0 GROUP BY product_id) rs ON rs.product_id=p.id
+    WHERE p.deleted=0 AND p.status=1 AND p.id != #{productId}
+      AND (p.category_id=#{categoryId}<if test="brandId != null"> OR p.brand_id=#{brandId}</if>)
+    ORDER BY (p.category_id=#{categoryId}) DESC, p.sales DESC, p.id DESC LIMIT #{limit}
+  </select>
+  <update id="decrementTotalStock">
+    <!-- 原子维护商品总库存，保证其与 SKU 库存汇总一致。 -->
+    UPDATE product
+    SET total_stock = total_stock - #{quantity}, update_time = NOW()
+    WHERE id = #{productId} AND total_stock &gt;= #{quantity} AND deleted = 0
+  </update>
+  <update id="incrementTotalStock">
+    <!-- 预扣失败或订单取消后，恢复商品总库存。 -->
+    UPDATE product
+    SET total_stock = total_stock + #{quantity}, update_time = NOW()
+    WHERE id = #{productId} AND deleted = 0
+  </update>
+</mapper>

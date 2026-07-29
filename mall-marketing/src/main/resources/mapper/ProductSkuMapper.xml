@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.mapper.ProductSkuMapper">
+  <insert id="upsert">
+    <!-- SKU 编码是业务唯一键，重复保存时更新已有记录，避免产生重复 SKU。 -->
+    INSERT INTO product_sku
+      (product_id, sku_code, spec_info, price, original_price, stock, image, status, create_time, update_time, deleted)
+    VALUES
+      (#{productId}, #{skuCode}, #{specInfo}, #{price}, #{originalPrice}, #{stock}, #{image}, #{status}, NOW(), NOW(), 0)
+    ON DUPLICATE KEY UPDATE
+      product_id = VALUES(product_id), spec_info = VALUES(spec_info), price = VALUES(price),
+      original_price = VALUES(original_price), stock = VALUES(stock), image = VALUES(image),
+      status = VALUES(status), update_time = NOW(), deleted = 0
+  </insert>
+  <update id="decrementStock">
+    <!-- 使用带库存条件的原子扣减，防止并发下超卖。 -->
+    UPDATE product_sku
+    SET stock = stock - #{quantity}, update_time = NOW()
+    WHERE id = #{skuId} AND stock &gt;= #{quantity} AND deleted = 0
+  </update>
+  <update id="incrementStock">
+    <!-- 订单取消或支付失败时，通过该补偿操作恢复库存。 -->
+    UPDATE product_sku
+    SET stock = stock + #{quantity}, update_time = NOW()
+    WHERE id = #{skuId} AND deleted = 0
+  </update>
+</mapper>
