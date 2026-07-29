@@ -126,35 +126,14 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private BigDecimal calcTotalSales() {
-        List<Integer> paidStatuses = List.of(
-                OrderStatus.PAID.getCode(),
-                OrderStatus.SHIPPED.getCode(),
-                OrderStatus.COMPLETED.getCode()
-        );
-        QueryWrapper<Order> qw = new QueryWrapper<>();
-        qw.in("order_status", paidStatuses);
-        List<Order> orders = orderMapper.selectList(qw);
-        return orders.stream()
-                .map(Order::getPayAmount)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return decimalAggregate(orderMapper.selectObjs(new QueryWrapper<Order>().select("COALESCE(SUM(pay_amount), 0)")
+                .in("order_status", paidStatuses())));
     }
 
     private BigDecimal calcTodaySales() {
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-        List<Integer> paidStatuses = List.of(
-                OrderStatus.PAID.getCode(),
-                OrderStatus.SHIPPED.getCode(),
-                OrderStatus.COMPLETED.getCode()
-        );
-        QueryWrapper<Order> qw = new QueryWrapper<>();
-        qw.ge("create_time", todayStart);
-        qw.in("order_status", paidStatuses);
-        List<Order> orders = orderMapper.selectList(qw);
-        return orders.stream()
-                .map(Order::getPayAmount)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return decimalAggregate(orderMapper.selectObjs(new QueryWrapper<Order>().select("COALESCE(SUM(pay_amount), 0)")
+                .ge("create_time", todayStart).in("order_status", paidStatuses())));
     }
 
     private Integer countLowStock() {
@@ -205,31 +184,17 @@ public class DashboardServiceImpl implements DashboardService {
     private List<SalesTrendVO> getSalesTrend() {
         List<SalesTrendVO> trend = new ArrayList<>();
         LocalDate today = LocalDate.now();
-        List<Integer> paidStatuses = List.of(
-                OrderStatus.PAID.getCode(),
-                OrderStatus.SHIPPED.getCode(),
-                OrderStatus.COMPLETED.getCode()
-        );
-
+        LocalDateTime start = today.minusDays(SALES_TREND_DAYS - 1).atStartOfDay();
+        List<Map<String, Object>> rows = orderMapper.selectMaps(new QueryWrapper<Order>()
+                .select("DATE(create_time) AS stat_date", "COALESCE(SUM(pay_amount), 0) AS amount")
+                .ge("create_time", start).in("order_status", paidStatuses()).groupBy("DATE(create_time)"));
+        Map<String, BigDecimal> amounts = rows.stream().collect(Collectors.toMap(
+                row -> String.valueOf(row.get("stat_date")), row -> new BigDecimal(String.valueOf(row.get("amount"))), (a, b) -> a));
         for (int i = SALES_TREND_DAYS - 1; i >= 0; i--) {
             LocalDate date = today.minusDays(i);
-            LocalDateTime dayStart = date.atStartOfDay();
-            LocalDateTime dayEnd = date.atTime(LocalTime.MAX);
-
-            QueryWrapper<Order> qw = new QueryWrapper<>();
-            qw.ge("create_time", dayStart);
-            qw.le("create_time", dayEnd);
-            qw.in("order_status", paidStatuses);
-
-            List<Order> dayOrders = orderMapper.selectList(qw);
-            BigDecimal daySales = dayOrders.stream()
-                    .map(Order::getPayAmount)
-                    .filter(Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
             SalesTrendVO s = new SalesTrendVO();
             s.setDate(date.format(DATE_FMT));
-            s.setAmount(daySales);
+            s.setAmount(amounts.getOrDefault(s.getDate(), BigDecimal.ZERO));
             trend.add(s);
         }
 
@@ -245,12 +210,14 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<Map<String, Object>> results = orderItemMapper.selectMaps(qw);
 
+        List<Long> productIds = results.stream().map(row -> ((Number) row.get("product_id")).longValue()).toList();
+        Map<Long, Product> products = productMapper.selectBatchIds(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, product -> product));
         List<HotProductVO> hotProducts = new ArrayList<>();
         for (Map<String, Object> row : results) {
             Long productId = ((Number) row.get("product_id")).longValue();
             Long totalQty = ((Number) row.get("total_qty")).longValue();
-
-            Product product = productMapper.selectById(productId);
+            Product product = products.get(productId);
             if (product != null) {
                 HotProductVO h = new HotProductVO();
                 h.setId(productId);
@@ -301,20 +268,19 @@ public class DashboardServiceImpl implements DashboardService {
     private List<DailyUserVO> getUserTrend() {
         List<DailyUserVO> trend = new ArrayList<>();
         LocalDate today = LocalDate.now();
-
+        LocalDateTime start = today.minusDays(SALES_TREND_DAYS - 1).atStartOfDay();
+        List<Map<String, Object>> rows = userMapper.selectMaps(new QueryWrapper<User>()
+                .select("DATE(create_time) AS stat_date", "COUNT(*) AS total_count")
+                .ge("create_time", start).groupBy("DATE(create_time)"));
+        Map<String, Integer> counts = rows.stream().collect(Collectors.toMap(
+                row -> String.valueOf(row.get("stat_date")), row -> ((Number) row.get("total_count")).intValue(), (a, b) -> a));
         for (int i = SALES_TREND_DAYS - 1; i >= 0; i--) {
             LocalDate date = today.minusDays(i);
-            LocalDateTime dayStart = date.atStartOfDay();
-            LocalDateTime dayEnd = date.atTime(LocalTime.MAX);
-
-            Long newUsers = userMapper.selectCount(
-                    new QueryWrapper<User>().ge("create_time", dayStart).le("create_time", dayEnd)
-            );
-
+            int newUsers = counts.getOrDefault(date.format(DATE_FMT), 0);
             DailyUserVO du = new DailyUserVO();
             du.setDate(date.format(DATE_FMT));
-            du.setNewUsers(newUsers.intValue());
-            du.setActiveUsers(newUsers.intValue() * 2);
+            du.setNewUsers(newUsers);
+            du.setActiveUsers(newUsers * 2);
             trend.add(du);
         }
 
@@ -359,13 +325,8 @@ public class DashboardServiceImpl implements DashboardService {
      * 统计已退款（REFUNDED）状态的退款金额总和
      */
     private BigDecimal calcTotalRefundAmount() {
-        QueryWrapper<Refund> qw = new QueryWrapper<>();
-        qw.eq("status", RefundStatus.REFUNDED.getCode());
-        List<Refund> refunds = refundMapper.selectList(qw);
-        return refunds.stream()
-                .map(Refund::getAmount)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return decimalAggregate(refundMapper.selectObjs(new QueryWrapper<Refund>().select("COALESCE(SUM(amount), 0)")
+                .eq("status", RefundStatus.REFUNDED.getCode())));
     }
 
     /**
@@ -409,15 +370,10 @@ public class DashboardServiceImpl implements DashboardService {
         QueryWrapper<Refund> qw = new QueryWrapper<>();
         qw.eq("status", RefundStatus.REFUNDED.getCode());
         qw.ge("create_time", todayStart);
-        List<Refund> todayRefunds = refundMapper.selectList(qw);
-
-        int count = todayRefunds.size();
-        BigDecimal amount = todayRefunds.stream()
-                .map(Refund::getAmount)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return new TodayRefundStats(count, amount);
+        qw.select("COUNT(*) AS total_count", "COALESCE(SUM(amount), 0) AS total_amount");
+        Map<String, Object> result = refundMapper.selectMaps(qw).stream().findFirst().orElse(Map.of());
+        return new TodayRefundStats(((Number) result.getOrDefault("total_count", 0)).intValue(),
+                new BigDecimal(String.valueOf(result.getOrDefault("total_amount", 0))));
     }
 
     /**
@@ -493,5 +449,14 @@ public class DashboardServiceImpl implements DashboardService {
             this.count = count;
             this.amount = amount != null ? amount : BigDecimal.ZERO;
         }
+    }
+
+    private List<Integer> paidStatuses() {
+        return List.of(OrderStatus.PAID.getCode(), OrderStatus.SHIPPED.getCode(), OrderStatus.COMPLETED.getCode());
+    }
+
+    private BigDecimal decimalAggregate(List<Object> values) {
+        if (values.isEmpty() || values.get(0) == null) return BigDecimal.ZERO;
+        return new BigDecimal(String.valueOf(values.get(0)));
     }
 }

@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Collections;
 import java.util.function.Function;
@@ -125,10 +126,12 @@ public class ReviewServiceImpl implements ReviewService {
         QueryWrapper<Review> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", userId).orderByDesc("create_time");
         Page<Review> result = reviewMapper.selectPage(page, wrapper);
-        result.getRecords().forEach(review -> {
-            Product product = productMapper.selectById(review.getProductId());
-            review.setProductName(product == null ? "商品已删除" : product.getName());
-        });
+        List<Long> productIds = result.getRecords().stream().map(Review::getProductId)
+                .filter(java.util.Objects::nonNull).distinct().toList();
+        Map<Long, String> productNames = productIds.isEmpty() ? Map.of() : productMapper.selectBatchIds(productIds)
+                .stream().collect(Collectors.toMap(Product::getId, Product::getName, (a, b) -> a));
+        result.getRecords().forEach(review -> review.setProductName(
+                productNames.getOrDefault(review.getProductId(), "商品已删除")));
         return result;
     }
 

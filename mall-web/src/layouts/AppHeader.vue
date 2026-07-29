@@ -90,6 +90,7 @@ const isActive = (name: string) => route.name === name
           <router-link to="/categories" :class="{ active: isActive('Category') }">分类</router-link>
           <router-link to="/products" :class="{ active: isActive('ProductList') }">商品</router-link>
           <router-link to="/marketing/activities" :class="{ active: isActive('MarketingList') }">活动</router-link>
+          <router-link to="/leaderboard" :class="{ active: isActive('Leaderboard') }">排行榜</router-link>
         </nav>
       </div>
       <div class="header-center">
@@ -267,6 +268,8 @@ const isActive = (name: string) => route.name === name
       .nav {
         min-width: 0;
         gap: 2px;
+        overflow-x: auto;
+        scrollbar-width: none;
         a { padding: 6px 7px; font-size: 13px; white-space: nowrap; }
       }
     }

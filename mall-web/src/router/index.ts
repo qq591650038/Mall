@@ -169,6 +169,12 @@ const routes: RouteRecordRaw[] = [
     name: 'Category',
     component: () => import('@/views/category/Category.vue'),
     meta: { title: '全部分类' }
+  },
+  {
+    path: '/leaderboard',
+    name: 'Leaderboard',
+    component: () => import('@/views/Leaderboard.vue'),
+    meta: { title: 'Leaderboard' }
   }
 ]
 

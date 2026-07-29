@@ -16,6 +16,7 @@ import com.mall.mapper.OrderMapper;
 import com.mall.mapper.PaymentMapper;
 import com.mall.mapper.RefundMapper;
 import com.mall.mapper.OrderItemMapper;
+import com.mall.mapper.ProductMapper;
 import com.mall.mapper.UserMapper;
 import com.mall.service.RefundService;
 import com.mall.service.CouponService;
@@ -54,6 +55,7 @@ public class RefundServiceImpl implements RefundService {
     private final CouponService couponService;
     private final NotificationService notificationService;
     private final OrderItemMapper orderItemMapper;
+    private final ProductMapper productMapper;
     private final InventoryService inventoryService;
     private final MarketingActivityService marketingActivityService;
     private final PointsService pointsService;
@@ -66,6 +68,7 @@ public class RefundServiceImpl implements RefundService {
                              CouponService couponService,
                              NotificationService notificationService,
                              OrderItemMapper orderItemMapper,
+                             ProductMapper productMapper,
                              InventoryService inventoryService,
                              MarketingActivityService marketingActivityService,
                              PointsService pointsService,
@@ -77,6 +80,7 @@ public class RefundServiceImpl implements RefundService {
         this.couponService = couponService;
         this.notificationService = notificationService;
         this.orderItemMapper = orderItemMapper;
+        this.productMapper = productMapper;
         this.inventoryService = inventoryService;
         this.marketingActivityService = marketingActivityService;
         this.pointsService = pointsService;
@@ -389,7 +393,10 @@ public class RefundServiceImpl implements RefundService {
             boolean fullyRefunded = refundedAmount.compareTo(order.getPayAmount()) >= 0;
             if (fullyRefunded && !OrderStatus.REFUNDED.getCode().equals(order.getOrderStatus())) {
                 orderItemMapper.selectList(new QueryWrapper<com.mall.entity.OrderItem>().eq("order_id", order.getId()))
-                        .forEach(item -> inventoryService.release(item.getSkuId(), item.getProductId(), item.getQuantity()));
+                        .forEach(item -> {
+                            inventoryService.release(item.getSkuId(), item.getProductId(), item.getQuantity());
+                            productMapper.decrementSales(item.getProductId(), item.getQuantity());
+                        });
                 marketingActivityService.onRefundSuccessByOrderId(order.getId());
                 pointsService.reversePaymentPoints(order.getUserId(), order.getId(), order.getOrderNo());
             }

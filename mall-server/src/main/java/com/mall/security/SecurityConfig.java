@@ -78,6 +78,7 @@ public class SecurityConfig {
                                 "/api/refunds/callback",
                                 "/uploads/**",
                                 "/api/coupons/available",
+                                "/api/leaderboard",
                                 "/error",
                                 "/doc.html",
                                 "/v3/api-docs/**",

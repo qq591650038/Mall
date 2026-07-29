@@ -3,6 +3,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.mall.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,4 +19,8 @@ public interface ProductMapper extends BaseMapper<Product> {
                              @Param("brandId") Long brandId, @Param("limit") Integer limit);
  int decrementTotalStock(Long productId, Integer quantity);
  int incrementTotalStock(Long productId, Integer quantity);
+ @Update("UPDATE product SET sales = sales + #{quantity} WHERE id = #{productId}")
+ int incrementSales(@Param("productId") Long productId, @Param("quantity") Integer quantity);
+ @Update("UPDATE product SET sales = GREATEST(sales - #{quantity}, 0) WHERE id = #{productId}")
+ int decrementSales(@Param("productId") Long productId, @Param("quantity") Integer quantity);
 }

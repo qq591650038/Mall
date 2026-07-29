@@ -143,11 +143,7 @@ public class PaymentServiceImpl implements PaymentService {
         List<OrderItem> items = orderItemMapper
                 .selectList(new QueryWrapper<OrderItem>().eq("order_id", payment.getOrderId()));
         for (OrderItem item : items) {
-            com.mall.entity.Product product = productMapper.selectById(item.getProductId());
-            if (product != null) {
-                product.setSales(product.getSales() + item.getQuantity());
-                productMapper.updateById(product);
-            }
+            productMapper.incrementSales(item.getProductId(), item.getQuantity());
         }
 
         // 支付成功后发送站内消息通知
@@ -190,14 +186,12 @@ public class PaymentServiceImpl implements PaymentService {
     @Scheduled(fixedDelayString = "${mall.points.payment-retry-scan-ms:180000}")
     public void retryPaymentPoints() {
         if (pointsService == null) return;
-        List<Payment> paid = paymentMapper.findPaidWithoutPoints(100);
-        for (Payment payment : paid) {
-            Order order = orderMapper.selectById(payment.getOrderId());
-            if (order == null) continue;
+        List<com.mall.mapper.PaymentMapper.PaymentPointsRecoveryRow> paid = paymentMapper.findPaidWithoutPointsWithOrders(100);
+        for (com.mall.mapper.PaymentMapper.PaymentPointsRecoveryRow payment : paid) {
             try {
-                pointsService.earnForPayment(order.getUserId(), payment.getAmount(), order.getId(), order.getOrderNo());
+                pointsService.earnForPayment(payment.userId, payment.amount, payment.orderId, payment.orderNo);
             } catch (Exception e) {
-                log.error("补发支付积分失败: orderId={}", order.getId(), e);
+                log.error("补发支付积分失败: orderId={}", payment.orderId, e);
             }
         }
     }

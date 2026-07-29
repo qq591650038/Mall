@@ -511,11 +511,7 @@ public class MarketingActivityServiceImpl implements MarketingActivityService {
         List<MarketingParticipant> unformed = participantMapper.selectList(
                 new QueryWrapper<MarketingParticipant>().in("activity_id", activityIds)
                         .in("group_status", 1, 3).isNotNull("group_no"));
-        for (MarketingParticipant participant : unformed) {
-            participant.setGroupStatus(3);
-            participant.setUpdateTime(now);
-            participantMapper.updateById(participant);
-        }
+        participantMapper.markGroupsFailed(unformed.stream().map(MarketingParticipant::getId).toList(), now);
         return unformed.stream().filter(p -> Integer.valueOf(1).equals(p.getStatus()))
                 .map(MarketingParticipant::getOrderId).filter(java.util.Objects::nonNull).distinct().toList();
     }

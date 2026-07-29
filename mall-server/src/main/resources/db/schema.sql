@@ -197,6 +197,7 @@ CREATE TABLE `product` (
     KEY `idx_brand_id` (`brand_id`),
     KEY `idx_status` (`status`),
     KEY `idx_is_recommend` (`is_recommend`),
+    KEY `idx_product_status_sales` (`status`, `sales`, `id`),
     FULLTEXT KEY `ft_product_search` (`name`, `subtitle`, `description`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='商品表';
 
@@ -284,7 +285,8 @@ CREATE TABLE `order` (
     KEY `idx_user_id` (`user_id`),
     KEY `idx_order_status` (`order_status`),
     KEY `idx_create_time` (`create_time`),
-    KEY `idx_user_status_time` (`user_id`, `order_status`, `create_time`)
+    KEY `idx_user_status_time` (`user_id`, `order_status`, `create_time`),
+    KEY `idx_order_paid_status_user_amount` (`pay_status`, `order_status`, `user_id`, `pay_amount`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单表';
 
 -- =============================================
@@ -598,7 +600,8 @@ CREATE TABLE `points_account` (
     `total_spent` INT NOT NULL DEFAULT 0,
     `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_points_account_user` (`user_id`)
+    UNIQUE KEY `uk_points_account_user` (`user_id`),
+    KEY `idx_points_account_balance_user` (`balance`, `user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户积分账户';
 
 DROP TABLE IF EXISTS `points_ledger`;
@@ -893,7 +896,8 @@ CREATE TABLE IF NOT EXISTS `marketing_participant` (
     KEY `idx_activity_id` (`activity_id`),
     KEY `idx_user_id` (`user_id`),
     KEY `idx_group_no` (`group_no`),
-    KEY `idx_activity_user` (`activity_id`, `user_id`)
+    KEY `idx_activity_user` (`activity_id`, `user_id`),
+    KEY `idx_participant_expire` (`activity_id`, `group_status`, `status`, `group_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='营销活动参与者表';
 
 -- =============================================
