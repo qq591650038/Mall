@@ -6,6 +6,7 @@ import { getProductDetail, getRelatedProducts } from '@/api/product'
 import { getProductReviews, getProductReviewSummary } from '@/api/review'
 import { addFavorite, isFavorite, removeFavorite } from '@/api/common'
 import { addBrowseHistory, getBrowseHistoryList } from '@/api/browseHistory'
+import { subscribeStock } from '@/api/stockSubscription'
 import { useCartStore } from '@/stores/cart'
 import { useUserStore } from '@/stores/user'
 import AppHeader from '@/layouts/AppHeader.vue'
@@ -139,6 +140,16 @@ function buyNow() {
   sessionStorage.setItem('checkout_items', JSON.stringify(items))
   router.push({ name: 'OrderCreate' })
 }
+
+async function subscribeArrival() {
+  if (!userStore.isLoggedIn) {
+    router.push({ name: 'Login', query: { redirect: route.fullPath } })
+    return
+  }
+  if (!product.value) return
+  await subscribeStock(product.value.id, selectedSku.value?.id)
+  ElMessage.success('已订阅补货提醒')
+}
 </script>
 
 <template>
@@ -208,6 +219,7 @@ function buyNow() {
                 <el-button type="danger" size="large" class="action-btn primary" @click="buyNow">
                   立即购买
                 </el-button>
+                <el-button v-if="(selectedSku?.stock ?? product.totalStock) <= 0" size="large" @click="subscribeArrival">补货提醒</el-button>
                 <el-button size="large" :loading="favoriteLoading" @click="toggleProductFavorite">
                   <el-icon><StarFilled v-if="favorite" /><Star v-else /></el-icon>
                   {{ favorite ? '已收藏' : '收藏' }}

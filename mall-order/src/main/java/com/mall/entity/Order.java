@@ -26,6 +26,8 @@ public class Order implements Serializable {
     private LocalDateTime shipTime;
     private LocalDateTime receiveTime;
     private Long addressId;
+    private Long shippingTemplateId;
+    private String deliveryMethod;
     private String addressSnapshot;
     private String logisticsCompany;
     private String logisticsNo;

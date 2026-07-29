@@ -379,6 +379,8 @@ CREATE TABLE `order` (
     `ship_time` DATETIME DEFAULT NULL COMMENT '发货时间',
     `receive_time` DATETIME DEFAULT NULL COMMENT '收货时间',
     `address_id` BIGINT DEFAULT NULL COMMENT '收货地址ID',
+    `shipping_template_id` BIGINT DEFAULT NULL COMMENT '配送模板ID',
+    `delivery_method` VARCHAR(30) DEFAULT NULL COMMENT '配送方式',
     `address_snapshot` VARCHAR(1000) DEFAULT NULL COMMENT '收货地址快照(JSON)',
     `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
     `coupon_id` BIGINT DEFAULT NULL COMMENT '优惠券ID',
@@ -1018,6 +1020,42 @@ CREATE TABLE IF NOT EXISTS `seckill_user_quota` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_seckill_user_quota` (`activity_item_id`, `user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='秒杀用户已占用限购额度';
+
+CREATE TABLE IF NOT EXISTS `shipping_template` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT, `name` VARCHAR(100) NOT NULL, `delivery_method` VARCHAR(30) NOT NULL,
+    `regions` VARCHAR(1000) DEFAULT NULL, `base_freight` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    `free_amount` DECIMAL(10,2) DEFAULT NULL, `status` TINYINT NOT NULL DEFAULT 1,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`), KEY `idx_shipping_template_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='配送运费模板';
+
+CREATE TABLE IF NOT EXISTS `customer_service_ticket` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT, `user_id` BIGINT NOT NULL, `order_id` BIGINT DEFAULT NULL, `refund_id` BIGINT DEFAULT NULL,
+    `subject` VARCHAR(200) NOT NULL, `category` VARCHAR(30) NOT NULL, `status` TINYINT NOT NULL DEFAULT 0, `priority` TINYINT NOT NULL DEFAULT 0,
+    `handled_by` BIGINT DEFAULT NULL, `close_time` DATETIME DEFAULT NULL, `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`id`),
+    KEY `idx_ticket_user_time` (`user_id`,`create_time`), KEY `idx_ticket_status_time` (`status`,`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='客服工单';
+
+CREATE TABLE IF NOT EXISTS `customer_service_message` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT, `ticket_id` BIGINT NOT NULL, `sender_id` BIGINT NOT NULL, `sender_role` VARCHAR(20) NOT NULL,
+    `content` VARCHAR(2000) NOT NULL, `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`), KEY `idx_ticket_message` (`ticket_id`,`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='客服工单消息';
+
+CREATE TABLE IF NOT EXISTS `stock_subscription` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT, `user_id` BIGINT NOT NULL, `product_id` BIGINT NOT NULL, `sku_id` BIGINT DEFAULT NULL,
+    `status` TINYINT NOT NULL DEFAULT 0, `notified_time` DATETIME DEFAULT NULL, `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_stock_subscription` (`user_id`,`product_id`,`sku_id`), KEY `idx_stock_subscription_lookup` (`product_id`,`sku_id`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='缺货订阅';
+
+CREATE TABLE IF NOT EXISTS `user_risk_control` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT, `user_id` BIGINT NOT NULL, `risk_type` VARCHAR(30) NOT NULL, `reason` VARCHAR(500) NOT NULL,
+    `status` TINYINT NOT NULL DEFAULT 1, `created_by` BIGINT DEFAULT NULL, `expire_time` DATETIME DEFAULT NULL,
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`), KEY `idx_risk_user_active` (`user_id`,`status`,`expire_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户风控限制';
 
 -- =============================================
 -- 会员等级表

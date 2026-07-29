@@ -117,6 +117,24 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '消息中心', requiresAuth: true }
   },
   {
+    path: '/service-tickets',
+    name: 'ServiceTickets',
+    component: () => import('@/views/user/ServiceTickets.vue'),
+    meta: { title: '客服工单', requiresAuth: true }
+  },
+  {
+    path: '/stock-subscriptions',
+    name: 'StockSubscriptions',
+    component: () => import('@/views/user/StockSubscriptions.vue'),
+    meta: { title: '补货提醒', requiresAuth: true }
+  },
+  {
+    path: '/privacy',
+    name: 'PrivacyCenter',
+    component: () => import('@/views/user/PrivacyCenter.vue'),
+    meta: { title: '隐私与账户', requiresAuth: true }
+  },
+  {
     path: '/points',
     name: 'PointsCenter',
     component: () => import('@/views/user/PointsCenter.vue'),

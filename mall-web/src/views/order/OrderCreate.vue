@@ -6,6 +6,7 @@ import { getAddressList } from '@/api/address'
 import { createOrder } from '@/api/order'
 import { getUsableCoupons } from '@/api/common'
 import { getProductDetail } from '@/api/product'
+import { getShippingTemplates, type ShippingTemplate } from '@/api/shipping'
 import type { Address, UsableCoupon, OrderItemDTO, ProductDetailVO } from '@/types'
 import AppHeader from '@/layouts/AppHeader.vue'
 import AppFooter from '@/layouts/AppFooter.vue'
@@ -30,6 +31,8 @@ const selectedCouponId = ref<number | null>(null)
 const remark = ref('')
 const items = ref<CheckoutItem[]>([])
 const loading = ref(false)
+const shippingTemplates = ref<ShippingTemplate[]>([])
+const selectedShippingTemplateId = ref<number | null>(null)
 
 async function loadItemsDetail() {
   const saved = sessionStorage.getItem('checkout_items')
@@ -69,6 +72,8 @@ onMounted(async () => {
       selectedAddressId.value = addresses.value[0].id!
     }
     coupons.value = await getUsableCoupons()
+    shippingTemplates.value = await getShippingTemplates()
+    if (shippingTemplates.value.length) selectedShippingTemplateId.value = shippingTemplates.value[0].id
   } catch {
     /* handled */
   } finally {
@@ -100,9 +105,20 @@ const discountAmount = computed(() => {
   return 0
 })
 
-const payAmount = computed(() =>
-  Math.max(0, subtotal.value - discountAmount.value)
-)
+const selectedShippingTemplate = computed(() => shippingTemplates.value.find(item => item.id === selectedShippingTemplateId.value))
+const freightAmount = computed(() => {
+  const template = selectedShippingTemplate.value
+  if (!template || (template.freeAmount != null && subtotal.value >= template.freeAmount)) return 0
+  return template.baseFreight || 0
+})
+const payAmount = computed(() => Math.max(0, subtotal.value - discountAmount.value) + freightAmount.value)
+function templateFreightText(template: ShippingTemplate) {
+  if (template.freeAmount != null && subtotal.value >= template.freeAmount) return '免运费'
+  return `运费 ¥${template.baseFreight.toFixed(2)}`
+}
+function templateFreeShippingText(template: ShippingTemplate) {
+  return template.freeAmount != null ? `，满¥${template.freeAmount.toFixed(2)}包邮` : ''
+}
 
 function selectCoupon(id: number | null) {
   if (id !== null) {
@@ -133,6 +149,8 @@ async function submitOrder() {
     const order = await createOrder({
       addressId: selectedAddressId.value,
       couponId: selectedCouponId.value ?? undefined,
+      shippingTemplateId: selectedShippingTemplateId.value ?? undefined,
+      deliveryMethod: selectedShippingTemplate.value?.deliveryMethod,
       remark: remark.value || undefined,
       items: orderItems
     })
@@ -240,6 +258,16 @@ function goBack() {
             </div>
 
             <div class="section-card">
+              <h3>配送方式</h3>
+              <el-radio-group v-if="shippingTemplates.length" v-model="selectedShippingTemplateId">
+                <el-radio v-for="template in shippingTemplates" :key="template.id" :value="template.id">
+                  {{ template.name }}（{{ templateFreightText(template) }}{{ templateFreeShippingText(template) }}）
+                </el-radio>
+              </el-radio-group>
+              <span v-else>商家包邮</span>
+            </div>
+
+            <div class="section-card">
               <h3>订单备注</h3>
               <el-input
                 v-model="remark"
@@ -265,7 +293,7 @@ function goBack() {
               </div>
               <div class="summary-row">
                 <span>运费</span>
-                <span>免运费</span>
+                <span>{{ freightAmount > 0 ? `¥${freightAmount.toFixed(2)}` : '免运费' }}</span>
               </div>
               <div class="summary-row discount" v-if="discountAmount > 0">
                 <span>优惠</span>

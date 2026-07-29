@@ -7,6 +7,7 @@ import com.mall.mapper.ProductSkuMapper;
 import com.mall.service.impl.InventoryServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,7 +17,8 @@ class InventoryServiceImplTest {
     private final ProductMapper productMapper = mock(ProductMapper.class);
     private final ProductSkuMapper skuMapper = mock(ProductSkuMapper.class);
     private final InventoryLogMapper logMapper = mock(InventoryLogMapper.class);
-    private final InventoryServiceImpl service = new InventoryServiceImpl(productMapper, skuMapper, logMapper);
+    private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
+    private final InventoryServiceImpl service = new InventoryServiceImpl(productMapper, skuMapper, logMapper, eventPublisher);
 
     @Test
     void reserveRejectsInsufficientStock() {

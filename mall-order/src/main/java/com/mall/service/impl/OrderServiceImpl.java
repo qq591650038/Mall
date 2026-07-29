@@ -18,6 +18,7 @@ import com.mall.service.MarketingActivityService;
 import com.mall.service.OrderService;
 import com.mall.service.InventoryService;
 import com.mall.service.NotificationService;
+import com.mall.service.ShippingService;
 import com.mall.utils.RedisUtil;
 import com.mall.vo.OrderVO;
 import com.mall.vo.OrderVO.AddressSnapshot;
@@ -57,6 +58,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserMapper userMapper;
     private final NotificationService notificationService;
     private final MarketingActivityService marketingActivityService;
+    private final ShippingService shippingService;
 
     @Value("${mall.order.pending-timeout-minutes:30}")
     private long pendingTimeoutMinutes;
@@ -75,7 +77,7 @@ public class OrderServiceImpl implements OrderService {
                             UserCouponMapper userCouponMapper,
                             UserMapper userMapper,
                             NotificationService notificationService,
-                            MarketingActivityService marketingActivityService) {
+                            MarketingActivityService marketingActivityService, ShippingService shippingService) {
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
         this.productMapper = productMapper;
@@ -91,6 +93,7 @@ public class OrderServiceImpl implements OrderService {
         this.userMapper = userMapper;
         this.notificationService = notificationService;
         this.marketingActivityService = marketingActivityService;
+        this.shippingService = shippingService;
     }
 
     @Override
@@ -150,6 +153,8 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderNo(generateOrderNo());
         order.setUserId(userId);
         order.setAddressId(dto.getAddressId());
+        order.setShippingTemplateId(dto.getShippingTemplateId());
+        order.setDeliveryMethod(dto.getDeliveryMethod());
         order.setRemark(dto.getRemark());
         order.setOrderStatus(OrderStatus.PENDING_PAYMENT.getCode());
         order.setPayStatus(0);
@@ -194,9 +199,10 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setTotalAmount(totalAmount);
-        order.setPayAmount(totalAmount);
+        BigDecimal freight = shippingService.calculate(dto.getShippingTemplateId(), dto.getDeliveryMethod(), address, totalAmount);
+        order.setPayAmount(totalAmount.add(freight));
         order.setDiscountAmount(BigDecimal.ZERO);
-        order.setFreightAmount(BigDecimal.ZERO);
+        order.setFreightAmount(freight);
 
         if (dto.getCouponId() != null) {
             UserCoupon userCoupon = userCouponMapper.selectById(dto.getCouponId());
@@ -224,7 +230,7 @@ public class OrderServiceImpl implements OrderService {
             BigDecimal discount = calculateCouponDiscount(coupon, totalAmount);
             order.setCouponId(userCoupon.getId());
             order.setDiscountAmount(discount);
-            order.setPayAmount(totalAmount.subtract(discount));
+            order.setPayAmount(totalAmount.subtract(discount).add(freight));
 
             log.info("锁定优惠券: userCouponId={}", userCoupon.getId());
         }

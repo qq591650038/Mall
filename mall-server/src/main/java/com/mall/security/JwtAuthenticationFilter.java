@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.mall.service.RiskControlService;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -25,15 +26,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final RedisUtil redisUtil;
     private final String header;
     private final String prefix;
+    private final RiskControlService riskControlService;
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
                                    RedisUtil redisUtil,
                                    @Value("${jwt.header}") String header,
-                                   @Value("${jwt.prefix}") String prefix) {
+                                   @Value("${jwt.prefix}") String prefix, RiskControlService riskControlService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.redisUtil = redisUtil;
         this.header = header;
         this.prefix = prefix;
+        this.riskControlService = riskControlService;
     }
 
     @Override
@@ -45,6 +48,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
             try {
                 Long userId = jwtTokenProvider.getUserIdFromToken(token);
+                if ("user".equals(jwtTokenProvider.getTypeFromToken(token)) && riskControlService.isBlocked(userId)) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":403,\"message\":\"账户已被风控限制\"}");
+                    return;
+                }
                 String role = jwtTokenProvider.getRoleFromToken(token);
                 String type = jwtTokenProvider.getTypeFromToken(token);
 

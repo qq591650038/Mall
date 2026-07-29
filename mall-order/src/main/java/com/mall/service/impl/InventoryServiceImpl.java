@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import com.mall.event.InventoryRestoredEvent;
 import java.time.LocalDateTime;
 
 @Service
@@ -20,6 +22,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final ProductMapper productMapper;
     private final ProductSkuMapper productSkuMapper;
     private final InventoryLogMapper inventoryLogMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -41,6 +44,7 @@ public class InventoryServiceImpl implements InventoryService {
             if (productMapper.incrementTotalStock(productId, quantity) != 1) throw new IllegalStateException("product inventory restore failed");
             skuRestored = true;
             record.setStatus(1); record.setUpdateTime(LocalDateTime.now()); inventoryLogMapper.updateById(record);
+            eventPublisher.publishEvent(new InventoryRestoredEvent(productId, skuId, quantity));
         } catch (RuntimeException e) {
             if (skuRestored) productSkuMapper.decrementStock(skuId, quantity);
             record.setStatus(2); record.setErrorMessage(e.getMessage()); record.setUpdateTime(LocalDateTime.now()); inventoryLogMapper.updateById(record); throw e;

@@ -45,6 +45,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '库存管理', icon: 'Box' }
       },
       {
+        path: 'shipping-templates',
+        name: 'ShippingTemplateList',
+        component: () => import('@/views/system/ShippingTemplateList.vue'),
+        meta: { title: '配送模板', icon: 'Van' }
+      },
+      {
         path: 'brands',
         name: 'BrandList',
         component: () => import('@/views/system/BrandList.vue'),
@@ -129,10 +135,22 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '售后管理', icon: 'Refresh' }
       },
       {
+        path: 'service-tickets',
+        name: 'ServiceTicketList',
+        component: () => import('@/views/service/ServiceTicketList.vue'),
+        meta: { title: '客服工单', icon: 'ChatDotRound' }
+      },
+      {
         path: 'operation-logs',
         name: 'OperationLogList',
         component: () => import('@/views/system/OperationLogList.vue'),
         meta: { title: '审计日志', icon: 'Document' }
+      },
+      {
+        path: 'operations',
+        name: 'OperationsConsole',
+        component: () => import('@/views/system/OperationsConsole.vue'),
+        meta: { title: '运营健康', icon: 'Monitor' }
       },
       {
         path: 'profile',

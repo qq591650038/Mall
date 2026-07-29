@@ -132,6 +132,9 @@ const isActive = (name: string) => route.name === name
                 <el-dropdown-item @click="goProfile">个人中心</el-dropdown-item>
                 <el-dropdown-item @click="router.push('/orders')">我的订单</el-dropdown-item>
                 <el-dropdown-item @click="router.push('/notifications')">消息中心</el-dropdown-item>
+                <el-dropdown-item @click="router.push('/service-tickets')">客服工单</el-dropdown-item>
+                <el-dropdown-item @click="router.push('/stock-subscriptions')">补货提醒</el-dropdown-item>
+                <el-dropdown-item @click="router.push('/privacy')">隐私与账户</el-dropdown-item>
                 <el-dropdown-item @click="router.push('/favorites')">我的收藏</el-dropdown-item>
                 <el-dropdown-item @click="router.push('/reviews/mine')">我的评价</el-dropdown-item>
                 <el-dropdown-item @click="router.push('/coupons')">优惠券</el-dropdown-item>

@@ -175,6 +175,8 @@ export interface CreateOrderDTO {
   remark?: string
   items: OrderItemDTO[]
   couponId?: number
+  shippingTemplateId?: number
+  deliveryMethod?: string
 }
 
 export interface OrderItemDTO {
