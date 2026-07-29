@@ -509,7 +509,7 @@ public class MarketingActivityServiceImpl implements MarketingActivityService {
 
     private void publishSeckillStockRestore(MarketingParticipant participant) {
         MarketingActivity activity = activityMapper.selectById(participant.getActivityId());
-        if (activity != null && "SECKILL".equals(activity.getType())) {
+        if (activity != null && "FLASH_SALE".equals(activity.getType())) {
             eventPublisher.publishEvent(new com.mall.event.SeckillStockRestoredEvent(
                     participant.getActivityId(), participant.getActivityItemId(), participant.getUserId(), participant.getQuantity()));
         }

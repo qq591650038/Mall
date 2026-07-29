@@ -45,7 +45,7 @@ public class MarketingOrderController {
     public Result<MarketingParticipateVO> participate(@AuthenticationPrincipal Long userId,
                                                       @RequestBody ParticipateRequest request) {
         MarketingActivity activity = marketingActivityService.getById(request.getActivityId());
-        if ("SECKILL".equals(activity.getType())) {
+        if ("FLASH_SALE".equals(activity.getType())) {
             return Result.error("Seckill orders must use the asynchronous seckill endpoint");
         }
         // 1. 参与活动（扣减库存、创建参与记录）

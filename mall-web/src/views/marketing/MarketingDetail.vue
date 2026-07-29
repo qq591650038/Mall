@@ -121,7 +121,7 @@ async function handleBuy(item: MarketingActivityItem) {
   }
 
   try {
-    const result = activity.value?.type === 'SECKILL'
+    const result = activity.value?.type === 'FLASH_SALE'
       ? await seckillParticipate(activityId.value, item.id || 0, 1)
       : await participate(activityId.value, item.id || 0, item.productId, item.skuId, 1)
     if (result.requestId) {

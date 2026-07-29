@@ -88,7 +88,7 @@ public class SeckillAsyncServiceImpl implements SeckillAsyncService {
         int actualQuantity = quantity == null ? 1 : quantity;
         MarketingActivity activity = activityMapper.selectById(activityId);
         MarketingActivityItem item = itemMapper.selectById(itemId);
-        if (activity == null || item == null || !activityId.equals(item.getActivityId()) || !"SECKILL".equals(activity.getType())
+        if (activity == null || item == null || !activityId.equals(item.getActivityId()) || !"FLASH_SALE".equals(activity.getType())
                 || activity.getStatus() != 1 || LocalDateTime.now().isBefore(activity.getStartTime()) || LocalDateTime.now().isAfter(activity.getEndTime())) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "Seckill activity is unavailable");
         }
@@ -150,7 +150,7 @@ public class SeckillAsyncServiceImpl implements SeckillAsyncService {
         try {
             MarketingActivityItem item = itemMapper.selectById(request.getActivityItemId());
             MarketingActivity activity = activityMapper.selectById(request.getActivityId());
-            if (item == null || activity == null || !"SECKILL".equals(activity.getType()) || itemMapper.deductForSeckill(item.getId(), request.getQuantity()) != 1) {
+            if (item == null || activity == null || !"FLASH_SALE".equals(activity.getType()) || itemMapper.deductForSeckill(item.getId(), request.getQuantity()) != 1) {
                 throw new BusinessException(ErrorCode.STOCK_INSUFFICIENT, "Seckill stock is insufficient");
             }
             CreateOrderDTO dto = new CreateOrderDTO();

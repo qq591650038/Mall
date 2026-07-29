@@ -945,7 +945,7 @@ CREATE TABLE IF NOT EXISTS `marketing_activity` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `name` VARCHAR(100) NOT NULL COMMENT '活动名称',
     `group_target` INT DEFAULT NULL COMMENT '拼团成团人数',
-    `type` VARCHAR(30) NOT NULL COMMENT '活动类型: LIMIT_TIME_DISCOUNT-限时折扣, FULL_REDUCTION-满减, SECKILL-秒杀, GROUP_BUY-拼团',
+    `type` VARCHAR(30) NOT NULL COMMENT '活动类型: LIMITED_DISCOUNT-限时折扣, FULL_REDUCTION-满减, FLASH_SALE-秒杀, GROUP_BUY-拼团',
     `description` VARCHAR(500) DEFAULT NULL COMMENT '活动描述',
     `start_time` DATETIME NOT NULL COMMENT '活动开始时间',
     `end_time` DATETIME NOT NULL COMMENT '活动结束时间',

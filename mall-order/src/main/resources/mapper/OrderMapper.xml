@@ -16,4 +16,25 @@
         ORDER BY create_time DESC, id DESC
         LIMIT #{limit}
     </select>
+
+    <!-- 使用原状态条件实现 CAS 状态转换，避免并发请求覆盖订单状态。 -->
+    <update id="updateStatus">
+        UPDATE `order`
+        SET order_status = #{toStatus}, update_time = NOW()
+        WHERE id = #{id} AND user_id = #{userId}
+        AND order_status = #{fromStatus} AND deleted = 0
+    </update>
+    <!-- 超时取消只处理待支付订单，避免取消已支付订单。 -->
+    <update id="cancelPending">
+        UPDATE `order`
+        SET order_status = 4, update_time = NOW()
+        WHERE id = #{id} AND order_status = 0 AND deleted = 0
+    </update>
+    <!-- 只有待支付订单可以标记为已支付，重复回调不会重复变更状态。 -->
+    <update id="markPaid">
+        UPDATE `order`
+        SET order_status = 1, pay_status = 1, pay_time = NOW(),
+        expire_time = NULL, update_time = NOW()
+        WHERE id = #{id} AND order_status = 0 AND deleted = 0
+    </update>
 </mapper>

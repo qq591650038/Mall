@@ -20,7 +20,7 @@ public class MarketingActivity implements Serializable {
     /** 活动名称 */
     private String name;
 
-    /** 活动类型: LIMIT_TIME_DISCOUNT-限时折扣, FULL_REDUCTION-满减, SECKILL-秒杀, GROUP_BUY-拼团 */
+    /** 活动类型: LIMITED_DISCOUNT-限时折扣, FULL_REDUCTION-满减, FLASH_SALE-秒杀, GROUP_BUY-拼团 */
     private String type;
     private Integer groupTarget;
 
