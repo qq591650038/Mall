@@ -2,7 +2,7 @@
 import {computed, onMounted, onUnmounted, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {getActivityDetail, getActivityItems, participate} from '@/api/marketing'
+import {getActivityDetail, getActivityItems, getSeckillRequest, participate, seckillParticipate} from '@/api/marketing'
 import type {MarketingActivity, MarketingActivityItem} from '@/types'
 import AppHeader from '@/layouts/AppHeader.vue'
 import AppFooter from '@/layouts/AppFooter.vue'
@@ -121,7 +121,13 @@ async function handleBuy(item: MarketingActivityItem) {
   }
 
   try {
-    const result = await participate(activityId.value, item.id || 0, item.productId, item.skuId, 1)
+    const result = activity.value?.type === 'SECKILL'
+      ? await seckillParticipate(activityId.value, item.id || 0, 1)
+      : await participate(activityId.value, item.id || 0, item.productId, item.skuId, 1)
+    if (result.requestId) {
+      await waitForSeckillOrder(result.requestId)
+      return
+    }
     ElMessage.success('抢购成功！正在跳转订单页面...')
     if (result.orderId) {
       router.push({ name: 'OrderDetail', params: { id: result.orderId } })
@@ -131,6 +137,23 @@ async function handleBuy(item: MarketingActivityItem) {
   } catch {
     // 错误已由 request 拦截器处理
   }
+}
+
+async function waitForSeckillOrder(requestId: string) {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    const request = await getSeckillRequest(requestId)
+    if (request.status === 1 && request.orderId) {
+      ElMessage.success('Order created')
+      router.push({name: 'OrderDetail', params: {id: request.orderId}})
+      return
+    }
+    if (request.status === 2) {
+      ElMessage.error(request.errorMessage || 'Seckill request failed')
+      return
+    }
+  }
+  ElMessage.info('Request is queued. Check your orders shortly.')
 }
 
 // 库存格式化

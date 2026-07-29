@@ -3,6 +3,7 @@ package com.mall.controller;
 import com.mall.common.result.Result;
 import com.mall.dto.order.CreateOrderDTO;
 import com.mall.entity.Address;
+import com.mall.entity.MarketingActivity;
 import com.mall.service.AddressService;
 import com.mall.service.MarketingActivityService;
 import com.mall.service.OrderService;
@@ -43,6 +44,10 @@ public class MarketingOrderController {
     @Operation(summary = "参与活动并下单", description = "用户参与营销活动并自动创建订单")
     public Result<MarketingParticipateVO> participate(@AuthenticationPrincipal Long userId,
                                                       @RequestBody ParticipateRequest request) {
+        MarketingActivity activity = marketingActivityService.getById(request.getActivityId());
+        if ("SECKILL".equals(activity.getType())) {
+            return Result.error("Seckill orders must use the asynchronous seckill endpoint");
+        }
         // 1. 参与活动（扣减库存、创建参与记录）
         int quantity = request.getQuantity() != null ? request.getQuantity() : 1;
         MarketingParticipateVO participateResult = marketingActivityService.participate(

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.mapper.SeckillRequestMapper">
+    <select id="selectForUpdate" resultType="com.mall.entity.SeckillRequest">
+        SELECT * FROM seckill_request WHERE request_id = #{requestId} FOR UPDATE
+    </select>
+    <update id="markSucceeded">UPDATE seckill_request SET status = 1, order_id = #{orderId}, update_time = NOW() WHERE request_id = #{requestId} AND status = 0</update>
+    <update id="markFailed">UPDATE seckill_request SET status = 2, error_message = #{errorMessage}, update_time = NOW() WHERE request_id = #{requestId} AND status = 0</update>
+    <update id="markCompensated">UPDATE seckill_request SET compensated = 1, update_time = NOW() WHERE request_id = #{requestId} AND compensated = 0</update>
+</mapper>

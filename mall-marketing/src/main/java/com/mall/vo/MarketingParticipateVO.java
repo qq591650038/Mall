@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 @Data
 public class MarketingParticipateVO {
 
+    private String requestId;
+
     /** 参与记录ID */
     private Long participantId;
 

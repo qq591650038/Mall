@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.mapper.MarketingActivityItemMapper">
+    <update id="deductForSeckill">
+        UPDATE marketing_activity_item SET stock = stock - #{quantity}, sold_count = sold_count + #{quantity}, update_time = NOW()
+        WHERE id = #{itemId} AND status = 1 AND stock <![CDATA[ >= ]]> #{quantity}
+    </update>
+</mapper>

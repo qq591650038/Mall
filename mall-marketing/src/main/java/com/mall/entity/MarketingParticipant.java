@@ -14,6 +14,7 @@ public class MarketingParticipant implements Serializable {
 
     @TableId(type = IdType.AUTO)
     private Long id;
+    private String requestId;
 
     /** 活动ID */
     private Long activityId;

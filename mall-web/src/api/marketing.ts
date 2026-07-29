@@ -34,3 +34,11 @@ export function participate(activityId: number, itemId: number, productId: numbe
     data: { activityId, itemId, productId, skuId, quantity }
   })
 }
+
+export function seckillParticipate(activityId: number, itemId: number, quantity: number = 1) {
+  return request<MarketingParticipateResult>({ url: '/marketing/seckill/participate', method: 'post', data: { activityId, itemId, quantity } })
+}
+
+export function getSeckillRequest(requestId: string) {
+  return request<{ status: number; orderId?: number; errorMessage?: string }>({ url: `/marketing/seckill/requests/${requestId}`, method: 'get' })
+}

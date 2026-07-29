@@ -11,6 +11,7 @@ import com.mall.vo.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,19 +33,22 @@ public class MarketingActivityServiceImpl implements MarketingActivityService {
     private final ProductMapper productMapper;
     private final ProductSkuMapper productSkuMapper;
     private final MarketingOrderQueryMapper orderQueryMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public MarketingActivityServiceImpl(MarketingActivityMapper activityMapper,
                                         MarketingActivityItemMapper itemMapper,
                                          MarketingParticipantMapper participantMapper,
                                          ProductMapper productMapper,
                                          ProductSkuMapper productSkuMapper,
-                                         MarketingOrderQueryMapper orderQueryMapper) {
+                                         MarketingOrderQueryMapper orderQueryMapper,
+                                         ApplicationEventPublisher eventPublisher) {
         this.activityMapper = activityMapper;
         this.itemMapper = itemMapper;
         this.participantMapper = participantMapper;
         this.productMapper = productMapper;
         this.productSkuMapper = productSkuMapper;
         this.orderQueryMapper = orderQueryMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -234,7 +238,7 @@ public class MarketingActivityServiceImpl implements MarketingActivityService {
             int activityStock = item.getStock() == null ? 0 : item.getStock();
             int soldCount = item.getSoldCount() == null ? 0 : item.getSoldCount();
             // 活动商品的剩余库存 = 活动配置库存 - 已售数量
-            int remainingActivityStock = Math.max(0, activityStock - soldCount);
+            int remainingActivityStock = Math.max(0, activityStock);
             // 同时不能超过 SKU 实际库存
             ProductSku sku = item.getSkuId() == null ? null : productSkuMapper.selectById(item.getSkuId());
             int skuStock = (sku == null || sku.getStock() == null) ? Integer.MAX_VALUE : sku.getStock();
@@ -478,6 +482,7 @@ public class MarketingActivityServiceImpl implements MarketingActivityService {
                 new QueryWrapper<MarketingParticipant>().eq("order_id", orderId).eq("status", 0).last("LIMIT 1"));
         if (participant != null) {
             onOrderCancel(participant.getId());
+            publishSeckillStockRestore(participant);
         }
     }
 
@@ -499,6 +504,15 @@ public class MarketingActivityServiceImpl implements MarketingActivityService {
         participant.setStatus(2);
         participant.setUpdateTime(LocalDateTime.now());
         participantMapper.updateById(participant);
+        publishSeckillStockRestore(participant);
+    }
+
+    private void publishSeckillStockRestore(MarketingParticipant participant) {
+        MarketingActivity activity = activityMapper.selectById(participant.getActivityId());
+        if (activity != null && "SECKILL".equals(activity.getType())) {
+            eventPublisher.publishEvent(new com.mall.event.SeckillStockRestoredEvent(
+                    participant.getActivityId(), participant.getActivityItemId(), participant.getUserId(), participant.getQuantity()));
+        }
     }
 
     @Override

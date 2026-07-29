@@ -396,6 +396,7 @@ export interface MarketingActivityItem {
 }
 
 export interface MarketingParticipateResult {
+  requestId?: string
   participantId: number
   activityId: number
   itemId: number

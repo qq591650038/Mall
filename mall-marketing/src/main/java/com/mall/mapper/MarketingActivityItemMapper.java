@@ -9,4 +9,6 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface MarketingActivityItemMapper extends BaseMapper<MarketingActivityItem> {
+    int deductForSeckill(@org.apache.ibatis.annotations.Param("itemId") Long itemId,
+                          @org.apache.ibatis.annotations.Param("quantity") Integer quantity);
 }

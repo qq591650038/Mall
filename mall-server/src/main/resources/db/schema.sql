@@ -987,6 +987,7 @@ CREATE TABLE IF NOT EXISTS `marketing_activity_item` (
 -- =============================================
 CREATE TABLE IF NOT EXISTS `marketing_participant` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `request_id` VARCHAR(64) DEFAULT NULL COMMENT '秒杀请求幂等键',
     `activity_id` BIGINT NOT NULL COMMENT '活动ID',
     `activity_item_id` BIGINT NOT NULL COMMENT '活动商品明细ID',
     `user_id` BIGINT NOT NULL COMMENT '用户ID',
@@ -999,6 +1000,7 @@ CREATE TABLE IF NOT EXISTS `marketing_participant` (
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_marketing_participant_request` (`request_id`),
     KEY `idx_activity_id` (`activity_id`),
     KEY `idx_user_id` (`user_id`),
     KEY `idx_group_no` (`group_no`),
