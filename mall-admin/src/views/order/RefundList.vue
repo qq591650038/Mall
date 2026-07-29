@@ -119,7 +119,7 @@ onMounted(loadRefunds)
               @click="openReviewDialog(row, 4)"
             >拒绝</el-button>
             <el-button
-              v-if="row.status === 2"
+              v-if="row.status === 2 || row.status === 5"
               type="primary"
               size="small"
               @click="handleComplete(row)"

@@ -376,7 +376,8 @@ public class RefundServiceImpl implements RefundService {
             throw new BusinessException(ErrorCode.NOT_FOUND, "退款记录不存在");
         }
         if (RefundStatus.REFUNDED.getCode().equals(refund.getStatus())) return;
-        if (!RefundStatus.REFUNDING.getCode().equals(refund.getStatus())) {
+        if (!RefundStatus.REFUNDING.getCode().equals(refund.getStatus())
+                && !RefundStatus.RETURN_SHIPPING.getCode().equals(refund.getStatus())) {
             throw new BusinessException(ErrorCode.REFUND_STATUS_ERROR, "退款尚未进入第三方退款处理中");
         }
         refund.setStatus(RefundStatus.REFUNDED.getCode());

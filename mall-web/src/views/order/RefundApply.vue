@@ -31,10 +31,15 @@ const refundReasons = [
   '其他原因'
 ]
 
+const refundableAmount = computed(() => {
+  const amount = Number(order.value?.payAmount)
+  return Number.isFinite(amount) && amount > 0 ? amount : 0
+})
+
 onMounted(async () => {
   try {
     order.value = await getOrderById(orderId.value)
-    form.value.amount = order.value?.payAmount || 0
+    form.value.amount = refundableAmount.value
   } catch {
     ElMessage.error('获取订单信息失败')
     router.push({ name: 'OrderList' })
@@ -48,11 +53,15 @@ async function handleSubmit() {
     ElMessage.warning('请选择退款原因')
     return
   }
+  if (refundableAmount.value <= 0) {
+    ElMessage.warning('该订单没有可退金额')
+    return
+  }
   if (!form.value.amount || form.value.amount <= 0) {
     ElMessage.warning('请输入退款金额')
     return
   }
-  if (form.value.amount > (order.value?.payAmount || 0)) {
+  if (form.value.amount > refundableAmount.value) {
     ElMessage.warning('退款金额不能超过实付金额')
     return
   }
@@ -120,16 +129,24 @@ function goBack() {
               </el-select>
             </el-form-item>
 
-            <el-form-item label="退款金额" required>
+            <el-form-item v-if="refundableAmount > 0" label="退款金额" required>
               <el-input-number
                 v-model="form.amount"
                 :min="0.01"
-                :max="order.payAmount"
+                :max="refundableAmount"
                 :precision="2"
                 :step="10"
               />
-              <span class="form-tip">最多可退 ¥{{ order.payAmount.toFixed(2) }}</span>
+              <span class="form-tip">最多可退 ¥{{ refundableAmount.toFixed(2) }}</span>
             </el-form-item>
+            <el-alert
+              v-else
+              title="该订单没有可退金额，暂不能提交退款申请"
+              type="warning"
+              :closable="false"
+              show-icon
+              class="refund-unavailable"
+            />
 
             <el-form-item label="详细说明">
               <el-input
@@ -146,7 +163,7 @@ function goBack() {
             </el-form-item>
 
             <el-form-item>
-              <el-button type="primary" size="large" :loading="submitting" @click="handleSubmit">
+              <el-button type="primary" size="large" :loading="submitting" :disabled="refundableAmount <= 0" @click="handleSubmit">
                 提交退款申请
               </el-button>
               <el-button size="large" @click="goBack">取消</el-button>
@@ -204,4 +221,6 @@ function goBack() {
 
   .form-tip { color: #999; font-size: 12px; margin-left: 12px; }
 }
+
+.refund-unavailable { margin-bottom: 18px; }
 </style>
