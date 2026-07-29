@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.mapper.RefundMapper">
+    <select id="selectAdminCursorPage" resultType="com.mall.entity.Refund">
+        SELECT * FROM refund
+        <where>
+            AND deleted = 0
+            <if test="status != null">AND status = #{status}</if>
+            <if test="orderNo != null and orderNo != ''">AND order_no LIKE CONCAT('%', #{orderNo}, '%')</if>
+            <if test="cursorTime != null">
+                AND (create_time <![CDATA[ < ]]> #{cursorTime} OR (create_time = #{cursorTime} AND id <![CDATA[ < ]]>
+                #{cursorId}))
+            </if>
+        </where>
+        ORDER BY create_time DESC, id DESC
+        LIMIT #{limit}
+    </select>
+    <select id="sumRefundedAmountByOrderId" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0) FROM refund WHERE order_id = #{orderId} AND status = 3
+    </select>
+</mapper>

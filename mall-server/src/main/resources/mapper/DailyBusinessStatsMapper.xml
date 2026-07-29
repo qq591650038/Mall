@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall.mapper.DailyBusinessStatsMapper">
+    <resultMap id="DailyBusinessStatsMap" type="com.mall.entity.DailyBusinessStats">
+        <id property="statDate" column="stat_date"/>
+        <result property="orderCount" column="order_count"/>
+        <result property="paidOrderCount" column="paid_order_count"/>
+        <result property="paidUserCount" column="paid_user_count"/>
+        <result property="salesAmount" column="sales_amount"/>
+        <result property="refundCount" column="refund_count"/>
+        <result property="refundAmount" column="refund_amount"/>
+        <result property="visitorCount" column="visitor_count"/>
+        <result property="newUserCount" column="new_user_count"/>
+    </resultMap>
+
+    <select id="selectDailySource" resultMap="DailyBusinessStatsMap">
+        SELECT #{statDate} AS stat_date,
+        (SELECT COUNT(*) FROM `order` WHERE create_time <![CDATA[ >= ]]> #{statDate} AND create_time <![CDATA[ < ]]>
+        DATE_ADD(#{statDate}, INTERVAL 1 DAY)) AS order_count,
+        (SELECT COUNT(*) FROM `order` WHERE pay_status = 1 AND order_status IN (1, 2, 3) AND create_time
+        <![CDATA[ >= ]]> #{statDate} AND create_time <![CDATA[ < ]]> DATE_ADD(#{statDate}, INTERVAL 1 DAY)) AS
+        paid_order_count,
+        (SELECT COUNT(DISTINCT user_id) FROM `order` WHERE pay_status = 1 AND order_status IN (1, 2, 3) AND create_time
+        <![CDATA[ >= ]]> #{statDate} AND create_time <![CDATA[ < ]]> DATE_ADD(#{statDate}, INTERVAL 1 DAY)) AS
+        paid_user_count,
+        (SELECT COALESCE(SUM(pay_amount), 0) FROM `order` WHERE pay_status = 1 AND order_status IN (1, 2, 3) AND
+        create_time <![CDATA[ >= ]]> #{statDate} AND create_time <![CDATA[ < ]]> DATE_ADD(#{statDate}, INTERVAL 1 DAY))
+        AS sales_amount,
+        (SELECT COUNT(*) FROM refund WHERE status = 3 AND create_time <![CDATA[ >= ]]> #{statDate} AND create_time
+        <![CDATA[ < ]]> DATE_ADD(#{statDate}, INTERVAL 1 DAY)) AS refund_count,
+        (SELECT COALESCE(SUM(amount), 0) FROM refund WHERE status = 3 AND create_time <![CDATA[ >= ]]> #{statDate} AND
+        create_time <![CDATA[ < ]]> DATE_ADD(#{statDate}, INTERVAL 1 DAY)) AS refund_amount,
+        (SELECT COUNT(DISTINCT user_id) FROM browse_history WHERE browse_time <![CDATA[ >= ]]> #{statDate} AND
+        browse_time <![CDATA[ < ]]> DATE_ADD(#{statDate}, INTERVAL 1 DAY)) AS visitor_count,
+        (SELECT COUNT(*) FROM `user` WHERE create_time <![CDATA[ >= ]]> #{statDate} AND create_time <![CDATA[ < ]]>
+        DATE_ADD(#{statDate}, INTERVAL 1 DAY)) AS new_user_count
+    </select>
+
+    <select id="selectBetween" resultMap="DailyBusinessStatsMap">
+        SELECT * FROM daily_business_stats WHERE stat_date BETWEEN #{startDate} AND #{endDate} ORDER BY stat_date
+    </select>
+
+    <select id="selectTotals" resultMap="DailyBusinessStatsMap">
+        SELECT NULL AS stat_date, COALESCE(SUM(order_count), 0) AS order_count,
+        COALESCE(SUM(paid_order_count), 0) AS paid_order_count,
+        COALESCE(SUM(paid_user_count), 0) AS paid_user_count,
+        COALESCE(SUM(sales_amount), 0) AS sales_amount,
+        COALESCE(SUM(refund_count), 0) AS refund_count,
+        COALESCE(SUM(refund_amount), 0) AS refund_amount,
+        COALESCE(SUM(visitor_count), 0) AS visitor_count,
+        COALESCE(SUM(new_user_count), 0) AS new_user_count
+        FROM daily_business_stats
+    </select>
+
+    <insert id="replace" parameterType="com.mall.entity.DailyBusinessStats">
+        INSERT INTO daily_business_stats
+        (stat_date, order_count, paid_order_count, paid_user_count, sales_amount, refund_count, refund_amount,
+        visitor_count, new_user_count)
+        VALUES (#{statDate}, #{orderCount}, #{paidOrderCount}, #{paidUserCount}, #{salesAmount}, #{refundCount},
+        #{refundAmount}, #{visitorCount}, #{newUserCount})
+        ON DUPLICATE KEY UPDATE order_count = VALUES(order_count), paid_order_count = VALUES(paid_order_count),
+        paid_user_count = VALUES(paid_user_count), sales_amount = VALUES(sales_amount), refund_count =
+        VALUES(refund_count),
+        refund_amount = VALUES(refund_amount), visitor_count = VALUES(visitor_count), new_user_count =
+        VALUES(new_user_count)
+    </insert>
+</mapper>
