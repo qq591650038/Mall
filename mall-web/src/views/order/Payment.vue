@@ -171,29 +171,8 @@ async function simulatePaySuccess() {
   stopPolling()
   stopCountdown()
   if (payResult.value) {
-    /* Payment confirmation is performed by the authenticated mock endpoint. */
-    const amount = String(payResult.value.amount)
-    const timestamp = String(Math.floor(Date.now() / 1000))
-    const payload = `${payResult.value.paymentNo}|${payResult.value.orderNo}|${amount}|${timestamp}`
-    const callbackData = {
-      paymentNo: payResult.value.paymentNo,
-      orderNo: payResult.value.orderNo,
-      amount,
-      timestamp,
-      signature: ''
-    }
     try {
       await confirmMockPayment(orderId.value, payResult.value.paymentNo)
-      const response = { ok: true }
-      /*
-      const response = await fetch('/api/orders/payment/callback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(callbackData)
-      }) */
-      if (!response.ok) {
-        throw new Error('支付回调处理失败')
-      }
       ElMessage.success('支付成功')
       setTimeout(() => {
         router.push({ name: 'PaymentResult', params: { id: orderId.value } })

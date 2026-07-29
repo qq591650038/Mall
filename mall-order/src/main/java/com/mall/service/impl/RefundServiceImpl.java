@@ -35,6 +35,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
+import java.security.MessageDigest;
 import java.time.Instant;
 
 import java.time.LocalDateTime;
@@ -122,7 +123,7 @@ public class RefundServiceImpl implements RefundService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RefundVO apply(Long userId, Long orderId, Refund refund) {
-        Order order = orderMapper.selectById(orderId);
+        Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", orderId).last("FOR UPDATE"));
         if (order == null || !order.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.ORDER_NOT_EXIST);
         }
@@ -167,6 +168,7 @@ public class RefundServiceImpl implements RefundService {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "售后类型无效");
         }
         refund.setType(refundType);
+        refund.setOriginalOrderStatus(order.getOrderStatus());
         refund.setStatus(RefundStatus.PENDING.getCode());
         refund.setRetryCount(0);
         refund.setCreateTime(LocalDateTime.now());
@@ -197,7 +199,7 @@ public class RefundServiceImpl implements RefundService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void cancel(Long id, Long userId) {
-        Refund refund = refundMapper.selectById(id);
+        Refund refund = refundMapper.selectOne(new QueryWrapper<Refund>().eq("id", id).last("FOR UPDATE"));
         if (refund == null || !refund.getUserId().equals(userId))
             throw new BusinessException(ErrorCode.NOT_FOUND, "退款记录不存在");
         if (!RefundStatus.PENDING.getCode().equals(refund.getStatus()))
@@ -205,7 +207,7 @@ public class RefundServiceImpl implements RefundService {
         refundMapper.deleteById(id);
         Order order = orderMapper.selectById(refund.getOrderId());
         if (order != null && OrderStatus.REFUNDING.getCode().equals(order.getOrderStatus())) {
-            order.setOrderStatus(OrderStatus.PAID.getCode());
+            order.setOrderStatus(restoreOrderStatus(refund));
             order.setPayStatus(1);
             order.setUpdateTime(LocalDateTime.now());
             orderMapper.updateById(order);
@@ -214,15 +216,9 @@ public class RefundServiceImpl implements RefundService {
 
     @Override
     public RefundVO getById(Long id, Long userId) {
-        Refund refund = refundMapper.selectById(id);
+        Refund refund = refundMapper.selectOne(new QueryWrapper<Refund>().eq("id", id).last("FOR UPDATE"));
         if (refund == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "退款记录不存在");
-        }
-        if (!RefundStatus.PENDING.getCode().equals(refund.getStatus())) {
-            throw new BusinessException(ErrorCode.REFUND_STATUS_ERROR, "只有待审核申请可以审核");
-        }
-        if (!RefundStatus.APPROVED.getCode().equals(status) && !RefundStatus.REJECTED.getCode().equals(status)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "审核状态只能是通过或拒绝");
         }
         if (userId != null && !refund.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "退款记录不存在");
@@ -303,6 +299,12 @@ public class RefundServiceImpl implements RefundService {
         if (refund == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "退款记录不存在");
         }
+        if (!RefundStatus.PENDING.getCode().equals(refund.getStatus())) {
+            throw new BusinessException(ErrorCode.REFUND_STATUS_ERROR, "只有待审核申请可以审核");
+        }
+        if (!RefundStatus.APPROVED.getCode().equals(status) && !RefundStatus.REJECTED.getCode().equals(status)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "审核状态只能是通过或拒绝");
+        }
 
         refund.setStatus(status);
         refund.setReviewRemark(remark);
@@ -344,7 +346,7 @@ public class RefundServiceImpl implements RefundService {
         } else if (RefundStatus.REJECTED.getCode().equals(status)) {
             Order order = orderMapper.selectById(refund.getOrderId());
             if (order != null) {
-                order.setOrderStatus(OrderStatus.PAID.getCode());
+                order.setOrderStatus(restoreOrderStatus(refund));
                 order.setPayStatus(1);
                 order.setUpdateTime(LocalDateTime.now());
                 orderMapper.updateById(order);
@@ -365,7 +367,7 @@ public class RefundServiceImpl implements RefundService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void refundSuccess(Long id) {
-        Refund refund = refundMapper.selectById(id);
+        Refund refund = refundMapper.selectOne(new QueryWrapper<Refund>().eq("id", id).last("FOR UPDATE"));
         if (refund == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "退款记录不存在");
         }
@@ -392,7 +394,7 @@ public class RefundServiceImpl implements RefundService {
                 pointsService.reversePaymentPoints(order.getUserId(), order.getId(), order.getOrderNo());
             }
             order.setPayStatus(fullyRefunded ? 2 : 1);
-            order.setOrderStatus(fullyRefunded ? OrderStatus.REFUNDED.getCode() : OrderStatus.PAID.getCode());
+            order.setOrderStatus(fullyRefunded ? OrderStatus.REFUNDED.getCode() : restoreOrderStatus(refund));
             order.setUpdateTime(LocalDateTime.now());
             orderMapper.updateById(order);
 
@@ -406,20 +408,19 @@ public class RefundServiceImpl implements RefundService {
             }
         }
 
-        Payment payment = paymentMapper.selectOne(
-                new QueryWrapper<Payment>()
-                        .eq("order_id", refund.getOrderId())
-                        .eq("payment_no", refund.getPaymentNo())
-                        .last("LIMIT 1")
-        );
-        if (payment != null) {
+        Order orderForNotify = orderMapper.selectById(refund.getOrderId());
+        Payment payment = paymentMapper.selectOne(new QueryWrapper<Payment>()
+                .eq("order_id", refund.getOrderId())
+                .eq("payment_no", refund.getPaymentNo())
+                .last("LIMIT 1"));
+        if (payment != null && orderForNotify != null
+                && OrderStatus.REFUNDED.getCode().equals(orderForNotify.getOrderStatus())) {
             payment.setPaymentStatus(2);
             payment.setUpdateTime(LocalDateTime.now());
             paymentMapper.updateById(payment);
         }
 
         // 退款成功后发送站内消息通知
-        Order orderForNotify = orderMapper.selectById(refund.getOrderId());
         if (orderForNotify != null) {
             notificationService.notify(
                     orderForNotify.getUserId(),
@@ -452,7 +453,7 @@ public class RefundServiceImpl implements RefundService {
     @Transactional(rollbackFor = Exception.class)
     public void callback(RefundCallbackDTO callback) {
         String payload = callback.getRefundNo() + "|" + callback.getOrderNo() + "|" + callback.getAmount() + "|" + callback.getTimestamp() + "|" + callback.getStatus();
-        if (!sign(payload).equalsIgnoreCase(callback.getSignature()))
+        if (!validSignature(payload, callback.getSignature()))
             throw new BusinessException(ErrorCode.FORBIDDEN, "退款签名无效");
         try {
             if (Math.abs(Instant.now().getEpochSecond() - Long.parseLong(callback.getTimestamp())) > 300)
@@ -462,7 +463,13 @@ public class RefundServiceImpl implements RefundService {
         }
         Refund refund = refundMapper.selectOne(new QueryWrapper<Refund>().eq("refund_no", callback.getRefundNo()).eq("order_no", callback.getOrderNo()).last("LIMIT 1"));
         if (refund == null) throw new BusinessException(ErrorCode.NOT_FOUND, "退款记录不存在");
-        if (refund.getAmount() == null || refund.getAmount().compareTo(new BigDecimal(callback.getAmount())) != 0)
+        BigDecimal callbackAmount;
+        try {
+            callbackAmount = new BigDecimal(callback.getAmount()).setScale(2, java.math.RoundingMode.UNNECESSARY);
+        } catch (RuntimeException e) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "退款金额格式无效");
+        }
+        if (refund.getAmount() == null || refund.getAmount().compareTo(callbackAmount) != 0)
             throw new BusinessException(ErrorCode.BAD_REQUEST, "退款金额不匹配");
         if (RefundStatus.REFUNDED.getCode().equals(refund.getStatus())) return;
         if ("SUCCESS".equalsIgnoreCase(callback.getStatus())) refundSuccess(refund.getId());
@@ -553,15 +560,25 @@ public class RefundServiceImpl implements RefundService {
                 && !RefundStatus.APPROVED.getCode().equals(status))
             throw new BusinessException(ErrorCode.REFUND_STATUS_ERROR, "当前状态不允许确认收货");
 
-        refundSuccess(refundId);
+        throw new BusinessException(ErrorCode.FORBIDDEN, "用户不能直接确认退款到账，请等待商家验收和支付渠道回调");
+    }
 
-        log.info("用户确认退货/换货已完成: refundId={}, userId={}", refundId, userId);
+    private boolean validSignature(String payload, String signature) {
+        if (signature == null || !signature.matches("(?i)[0-9a-f]{64}")) return false;
+        return MessageDigest.isEqual(sign(payload).getBytes(StandardCharsets.US_ASCII),
+                signature.toLowerCase(java.util.Locale.ROOT).getBytes(StandardCharsets.US_ASCII));
+    }
+
+    private int restoreOrderStatus(Refund refund) {
+        return refund.getOriginalOrderStatus() == null
+                ? OrderStatus.PAID.getCode()
+                : refund.getOriginalOrderStatus();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RefundVO applyExchange(Long userId, Long orderId, Long exchangeProductId, Long exchangeSkuId, String reason) {
-        Order order = orderMapper.selectById(orderId);
+        Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", orderId).last("FOR UPDATE"));
         if (order == null || !order.getUserId().equals(userId))
             throw new BusinessException(ErrorCode.ORDER_NOT_EXIST);
 
@@ -593,6 +610,7 @@ public class RefundServiceImpl implements RefundService {
         refund.setAmount(order.getPayAmount());
         refund.setReason(reason);
         refund.setType(2);
+        refund.setOriginalOrderStatus(order.getOrderStatus());
         refund.setExchangeProductId(exchangeProductId);
         refund.setExchangeSkuId(exchangeSkuId);
         refund.setStatus(RefundStatus.PENDING.getCode());

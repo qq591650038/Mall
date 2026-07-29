@@ -314,6 +314,7 @@ CREATE TABLE IF NOT EXISTS `refund` (
     `retry_count` INT NOT NULL DEFAULT 0,
     `last_error` VARCHAR(500) DEFAULT NULL,
     `type` TINYINT DEFAULT 0 COMMENT '售后类型 0-仅退款 1-退货 2-换货',
+    `original_order_status` TINYINT DEFAULT NULL COMMENT '申请售后前的订单状态',
     `logistics_company` VARCHAR(50) DEFAULT NULL COMMENT '退货物流公司',
     `logistics_no` VARCHAR(50) DEFAULT NULL COMMENT '退货物流单号',
     `return_address` VARCHAR(500) DEFAULT NULL COMMENT '退货地址（JSON格式）',

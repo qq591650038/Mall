@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class Refund implements Serializable {
     @TableId(type = IdType.AUTO) private Long id; private Long orderId; private String orderNo; private Long userId; private String refundNo; private BigDecimal amount; private String reason; private String images; private Integer status; private String reviewRemark; private LocalDateTime reviewTime; private String paymentNo; private Integer retryCount; private String lastError;
     private Integer type;
+    private Integer originalOrderStatus;
     private String logisticsCompany;
     private String logisticsNo;
     private String returnAddress;

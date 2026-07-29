@@ -52,7 +52,7 @@ public class AdminRefundController {
     }
 
     @PutMapping("/{id}/complete")
-    @Operation(summary = "完成退款", description = "标记退款为已完成")
+    @Operation(summary = "手动完成退款", description = "仅供未接入支付渠道时测试退款成功流程")
     public Result<Void> complete(@PathVariable Long id) {
         refundService.refundSuccess(id);
         return Result.success("退款完成", null);

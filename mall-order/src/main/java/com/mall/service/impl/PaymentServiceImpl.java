@@ -84,9 +84,6 @@ public class PaymentServiceImpl implements PaymentService {
                 .eq("order_no", callback.getOrderNo()));
         if (payment == null)
             throw new BusinessException(ErrorCode.NOT_FOUND, "支付记录不存在");
-        if (payment.getAmount() == null || payment.getAmount().compareTo(new BigDecimal(callback.getAmount())) != 0) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "支付金额不匹配");
-        }
         BigDecimal callbackAmount;
         try {
             callbackAmount = new BigDecimal(callback.getAmount()).setScale(2, java.math.RoundingMode.UNNECESSARY);
@@ -117,7 +114,7 @@ public class PaymentServiceImpl implements PaymentService {
     private void processPaidPayment(Payment payment) {
         if (payment.getPaymentStatus() == 1)
             return;
-        if (paymentMapper.markPaid(callback.getPaymentNo()) != 1)
+        if (paymentMapper.markPaid(payment.getPaymentNo()) != 1)
             return;
         if (orderMapper.markPaid(payment.getOrderId()) != 1) {
             throw new BusinessException(ErrorCode.ORDER_STATUS_ERROR, "order payment state update failed");

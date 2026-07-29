@@ -449,12 +449,22 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal totalAmount) {
-        return switch (coupon.getType()) {
+        if (coupon.getValue() == null || coupon.getValue().compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "优惠券面值无效");
+        }
+        BigDecimal discount = switch (coupon.getType()) {
             case 1, 3 -> coupon.getValue();
-            case 2 -> totalAmount.multiply(BigDecimal.valueOf(100).subtract(coupon.getValue()))
+            case 2 -> {
+                if (coupon.getValue().compareTo(BigDecimal.ZERO) < 0
+                        || coupon.getValue().compareTo(BigDecimal.valueOf(100)) > 0) {
+                    throw new BusinessException(ErrorCode.BAD_REQUEST, "优惠券折扣比例无效");
+                }
+                yield totalAmount.multiply(BigDecimal.valueOf(100).subtract(coupon.getValue()))
                     .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            }
             default -> BigDecimal.ZERO;
         };
+        return discount.max(BigDecimal.ZERO).min(totalAmount).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     private String generateOrderNo() {

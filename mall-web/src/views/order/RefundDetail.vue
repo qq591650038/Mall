@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { confirmReturnReceived, getRefundById, submitReturnLogistics } from '@/api/refund'
+import { ElMessage } from 'element-plus'
+import { getRefundById, submitReturnLogistics } from '@/api/refund'
 import type { RefundVO } from '@/types'
 import AppHeader from '@/layouts/AppHeader.vue'
 import AppFooter from '@/layouts/AppFooter.vue'
@@ -23,7 +23,6 @@ const statusMap: Record<number, string> = {
 
 const typeText = computed(() => refund.value?.type === 1 ? '退货退款' : '仅退款')
 const canSubmitLogistics = computed(() => refund.value?.type === 1 && refund.value.status === 1)
-const canConfirm = computed(() => refund.value?.type === 1 && [1, 5, 6].includes(refund.value.status))
 
 async function loadDetail() {
   loading.value = true
@@ -52,15 +51,6 @@ async function handleLogistics() {
   } finally {
     submitting.value = false
   }
-}
-
-async function handleConfirm() {
-  try {
-    await ElMessageBox.confirm('确认售后流程已经完成吗？', '确认完成', { type: 'warning' })
-    await confirmReturnReceived(refundId.value)
-    ElMessage.success('售后已完成')
-    await loadDetail()
-  } catch { /* cancelled or handled by request interceptor */ }
 }
 
 onMounted(loadDetail)
@@ -101,7 +91,6 @@ onMounted(loadDetail)
             </div>
             <div class="actions">
               <el-button v-if="canSubmitLogistics" type="primary" @click="logisticsDialog = true">提交退货物流</el-button>
-              <el-button v-if="canConfirm" type="success" @click="handleConfirm">确认售后完成</el-button>
             </div>
           </section>
 

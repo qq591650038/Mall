@@ -100,6 +100,40 @@ class PaymentServiceImplTest {
         verify(orderMapper).updateById(argThat(updated -> updated.getOrderStatus() == 7));
     }
 
+    @Test
+    void mockPaymentRejectsAnotherUsersOrder() {
+        Payment payment = unpaidPayment();
+        Order order = new Order();
+        order.setId(9L);
+        order.setUserId(99L);
+        order.setOrderNo("o1");
+        order.setPayAmount(new java.math.BigDecimal("10.00"));
+        when(paymentMapper.selectOne(any(QueryWrapper.class))).thenReturn(payment);
+        when(orderMapper.selectById(9L)).thenReturn(order);
+
+        assertThrows(RuntimeException.class, () -> service.confirmMockPayment(7L, 9L, "p1"));
+        verify(paymentMapper, never()).markPaid(any());
+    }
+
+    @Test
+    void mockPaymentUsesServerSideOrderAmount() {
+        Payment payment = unpaidPayment();
+        Order order = new Order();
+        order.setId(9L);
+        order.setUserId(7L);
+        order.setOrderNo("o1");
+        order.setPayAmount(new java.math.BigDecimal("10.00"));
+        when(paymentMapper.selectOne(any(QueryWrapper.class))).thenReturn(payment);
+        when(orderMapper.selectById(9L)).thenReturn(order);
+        when(paymentMapper.markPaid("p1")).thenReturn(1);
+        when(orderMapper.markPaid(9L)).thenReturn(1);
+
+        service.confirmMockPayment(7L, 9L, "p1");
+
+        verify(paymentMapper).markPaid("p1");
+        verify(orderMapper).markPaid(9L);
+    }
+
     private PaymentServiceImpl serviceWithMarketing(MarketingActivityService marketingService) {
         return new PaymentServiceImpl(paymentMapper, orderMapper, mock(OrderItemMapper.class),
                 mock(ProductMapper.class), notificationService, marketingService,
