@@ -286,6 +286,7 @@ CREATE TABLE `order` (
     KEY `idx_order_status` (`order_status`),
     KEY `idx_create_time` (`create_time`),
     KEY `idx_user_status_time` (`user_id`, `order_status`, `create_time`),
+    KEY `idx_order_status_user` (`order_status`, `user_id`),
     KEY `idx_order_paid_status_user_amount` (`pay_status`, `order_status`, `user_id`, `pay_amount`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='订单表';
 

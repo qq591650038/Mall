@@ -28,7 +28,6 @@ public class DashboardServiceImpl implements DashboardService {
     private final OrderMapper orderMapper;
     private final UserMapper userMapper;
     private final ReviewMapper reviewMapper;
-    private final OrderItemMapper orderItemMapper;
     private final ProductSkuMapper productSkuMapper;
     private final BrowseHistoryMapper browseHistoryMapper;
     private final RefundMapper refundMapper;
@@ -39,14 +38,17 @@ public class DashboardServiceImpl implements DashboardService {
     private static final int SALES_TREND_DAYS = 7;
     private static final int HOT_PRODUCTS_LIMIT = 10;
     private static final int STOCK_WARNINGS_LIMIT = 20;
+    private static final long CACHE_TTL_MILLIS = 30_000L;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATE_TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final Object statsCacheLock = new Object();
+    private volatile DashboardStatsVO cachedStats;
+    private volatile long cachedAtMillis;
 
     public DashboardServiceImpl(ProductMapper productMapper,
                                 OrderMapper orderMapper,
                                 UserMapper userMapper,
                                 ReviewMapper reviewMapper,
-                                OrderItemMapper orderItemMapper,
                                 ProductSkuMapper productSkuMapper,
                                 BrowseHistoryMapper browseHistoryMapper,
                                 RefundMapper refundMapper,
@@ -55,7 +57,6 @@ public class DashboardServiceImpl implements DashboardService {
         this.orderMapper = orderMapper;
         this.userMapper = userMapper;
         this.reviewMapper = reviewMapper;
-        this.orderItemMapper = orderItemMapper;
         this.productSkuMapper = productSkuMapper;
         this.browseHistoryMapper = browseHistoryMapper;
         this.refundMapper = refundMapper;
@@ -64,6 +65,23 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public DashboardStatsVO getStats() {
+        DashboardStatsVO cached = cachedStats;
+        if (cached != null && System.currentTimeMillis() - cachedAtMillis < CACHE_TTL_MILLIS) {
+            return cached;
+        }
+        synchronized (statsCacheLock) {
+            cached = cachedStats;
+            if (cached != null && System.currentTimeMillis() - cachedAtMillis < CACHE_TTL_MILLIS) {
+                return cached;
+            }
+            DashboardStatsVO stats = buildStats();
+            cachedStats = stats;
+            cachedAtMillis = System.currentTimeMillis();
+            return stats;
+        }
+    }
+
+    private DashboardStatsVO buildStats() {
         DashboardStatsVO vo = new DashboardStatsVO();
 
         vo.setTotalProducts(countProducts());
@@ -202,30 +220,21 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     private List<HotProductVO> getHotProducts() {
-        QueryWrapper<OrderItem> qw = new QueryWrapper<>();
-        qw.select("product_id", "SUM(quantity) as total_qty");
-        qw.groupBy("product_id");
-        qw.orderByDesc("total_qty");
-        qw.last("LIMIT " + HOT_PRODUCTS_LIMIT);
-
-        List<Map<String, Object>> results = orderItemMapper.selectMaps(qw);
-
-        List<Long> productIds = results.stream().map(row -> ((Number) row.get("product_id")).longValue()).toList();
-        Map<Long, Product> products = productMapper.selectBatchIds(productIds).stream()
-                .collect(Collectors.toMap(Product::getId, product -> product));
+        List<Product> products = productMapper.selectList(new QueryWrapper<Product>()
+                .select("id", "name", "price", "sales")
+                .eq("status", 1)
+                .gt("sales", 0)
+                .orderByDesc("sales")
+                .orderByAsc("id")
+                .last("LIMIT " + HOT_PRODUCTS_LIMIT));
         List<HotProductVO> hotProducts = new ArrayList<>();
-        for (Map<String, Object> row : results) {
-            Long productId = ((Number) row.get("product_id")).longValue();
-            Long totalQty = ((Number) row.get("total_qty")).longValue();
-            Product product = products.get(productId);
-            if (product != null) {
-                HotProductVO h = new HotProductVO();
-                h.setId(productId);
-                h.setName(product.getName());
-                h.setSales(totalQty.intValue());
-                h.setPrice(product.getPrice());
-                hotProducts.add(h);
-            }
+        for (Product product : products) {
+            HotProductVO h = new HotProductVO();
+            h.setId(product.getId());
+            h.setName(product.getName());
+            h.setSales(product.getSales());
+            h.setPrice(product.getPrice());
+            hotProducts.add(h);
         }
 
         return hotProducts;
@@ -380,61 +389,33 @@ public class DashboardServiceImpl implements DashboardService {
      * 分类热销商品：从 order_item 关联 product，按 category_id 分组统计销量前 10 的商品
      */
     private List<CategoryHotProductVO> getCategoryHotProducts() {
-        // 1. 从 order_item 聚合每个商品的销量，按销量倒序取前 10
-        QueryWrapper<OrderItem> itemQw = new QueryWrapper<>();
-        itemQw.select("product_id", "SUM(quantity) as total_qty");
-        itemQw.groupBy("product_id");
-        itemQw.orderByDesc("total_qty");
-        itemQw.last("LIMIT " + HOT_PRODUCTS_LIMIT);
-
-        List<Map<String, Object>> itemResults = orderItemMapper.selectMaps(itemQw);
-        if (itemResults.isEmpty()) {
+        List<Product> products = productMapper.selectList(new QueryWrapper<Product>()
+                .select("id", "category_id", "name", "price", "sales")
+                .eq("status", 1)
+                .gt("sales", 0)
+                .orderByDesc("sales")
+                .orderByAsc("id")
+                .last("LIMIT " + HOT_PRODUCTS_LIMIT));
+        if (products.isEmpty()) {
             return new ArrayList<>();
         }
-
-        // 2. 提取商品 ID 批量查询商品信息（包含 categoryId、name、price）
-        List<Long> productIds = itemResults.stream()
-                .map(row -> ((Number) row.get("product_id")).longValue())
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-
-        Map<Long, Product> productMap = productMapper.selectBatchIds(productIds).stream()
-                .collect(Collectors.toMap(Product::getId, p -> p, (a, b) -> a));
-
-        // 3. 查询分类信息，构建分类 ID -> 分类名 映射
-        List<Long> categoryIds = productMap.values().stream()
+        List<Long> categoryIds = products.stream()
                 .map(Product::getCategoryId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-
-        Map<Long, String> categoryNameMap = new HashMap<>();
-        if (!categoryIds.isEmpty()) {
-            categoryNameMap = categoryMapper.selectBatchIds(categoryIds).stream()
-                    .collect(Collectors.toMap(Category::getId, Category::getName, (a, b) -> a));
-        }
-
-        // 4. 拼装分类热销商品 VO
+        Map<Long, String> categoryNameMap = categoryMapper.selectBatchIds(categoryIds).stream()
+                .collect(Collectors.toMap(Category::getId, Category::getName, (a, b) -> a));
         List<CategoryHotProductVO> result = new ArrayList<>();
-        for (Map<String, Object> row : itemResults) {
-            Long productId = ((Number) row.get("product_id")).longValue();
-            Long totalQty = ((Number) row.get("total_qty")).longValue();
-
-            Product product = productMap.get(productId);
-            if (product == null) {
-                continue;
-            }
-
+        for (Product product : products) {
             CategoryHotProductVO vo = new CategoryHotProductVO();
             vo.setCategoryId(product.getCategoryId());
             vo.setCategoryName(categoryNameMap.getOrDefault(product.getCategoryId(), "未分类"));
             vo.setProductName(product.getName());
-            vo.setSales(totalQty.intValue());
+            vo.setSales(product.getSales());
             vo.setPrice(product.getPrice());
             result.add(vo);
         }
-
         return result;
     }
 
