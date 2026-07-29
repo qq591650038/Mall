@@ -216,7 +216,7 @@ public class RefundServiceImpl implements RefundService {
 
     @Override
     public RefundVO getById(Long id, Long userId) {
-        Refund refund = refundMapper.selectOne(new QueryWrapper<Refund>().eq("id", id).last("FOR UPDATE"));
+        Refund refund = refundMapper.selectById(id);
         if (refund == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "退款记录不存在");
         }
