@@ -320,7 +320,7 @@ onMounted(load)
 .summary-card span { color: #777; font-size: 13px; }
 .summary-card strong { color: #333; font-size: 26px; }
 .summary-card small { color: #aaa; font-size: 12px; }
-.summary-card.primary strong { color: #ff6b35; }
+.summary-card.primary strong { color: #C4908F; }
 .checkin-card .el-button { align-self: flex-start; margin-top: 4px; }
 
 .level-card .level-progress {
@@ -332,7 +332,7 @@ onMounted(load)
 .rate-tag {
   display: inline-block;
   padding: 2px 8px;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  background: linear-gradient(135deg, #D8A9A9, #E6C9B8);
   color: #fff;
   border-radius: 10px;
   font-size: 12px;
@@ -387,7 +387,7 @@ onMounted(load)
   align-items: center;
   gap: 12px;
 }
-.points-cost { color: #ff6b35; font-weight: 600; font-size: 16px; }
+.points-cost { color: #C4908F; font-weight: 600; font-size: 16px; }
 .stock { color: #666; font-size: 12px; }
 .stock.low { color: #e6a23c; }
 

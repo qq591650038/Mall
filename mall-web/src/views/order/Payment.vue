@@ -288,8 +288,8 @@ async function handleCancel() {
   text-align: center;
 
   .payment-amount { margin-bottom: 20px; }
-  .currency { font-size: 24px; color: #ff6b35; }
-  .amount { font-size: 48px; font-weight: 700; color: #ff6b35; }
+  .currency { font-size: 24px; color: #C4908F; }
+  .amount { font-size: 48px; font-weight: 700; color: #C4908F; }
   .payment-info { color: #999; font-size: 14px; p { margin: 4px 0; } }
 }
 
@@ -298,14 +298,14 @@ async function handleCancel() {
   border-radius: 12px;
   padding: 24px;
   text-align: center;
-  border: 2px solid #ff6b35;
+  border: 2px solid #D8A9A9;
 
   .countdown-icon { font-size: 32px; margin-bottom: 8px; }
   h3 { margin: 0 0 12px; color: #333; }
   .countdown-time {
     font-size: 36px;
     font-weight: 700;
-    color: #ff6b35;
+    color: #C4908F;
     font-family: monospace;
     letter-spacing: 4px;
   }
@@ -329,7 +329,7 @@ async function handleCancel() {
     cursor: pointer;
     transition: all 0.2s;
 
-    &.active { border-color: #ff6b35; background: #fffaf7; }
+    &.active { border-color: #D8A9A9; background: rgba(255, 249, 245, 0.8); }
     .method-icon { font-size: 24px; }
     .method-name { flex: 1; font-size: 16px; }
   }
@@ -341,7 +341,7 @@ async function handleCancel() {
   padding: 40px;
   text-align: center;
 
-  .processing-icon { margin-bottom: 16px; color: #ff6b35; }
+  .processing-icon { margin-bottom: 16px; color: #C4908F; }
   h3 { margin: 0 0 12px; }
   p { color: #666; margin: 4px 0; }
   .processing-tip { color: #999; margin-bottom: 16px; }
@@ -354,9 +354,9 @@ async function handleCancel() {
 
   .pay-btn {
     min-width: 300px;
-    background: #ff6b35;
-    border-color: #ff6b35;
-    &:hover { background: #ff5722; border-color: #ff5722; }
+    background: #C4908F;
+    border-color: #D8A9A9;
+    &:hover { background: #B07878; border-color: #B07878; }
   }
 }
 </style>

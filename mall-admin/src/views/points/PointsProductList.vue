@@ -530,7 +530,7 @@ onMounted(loadData)
   justify-content: flex-end;
 }
 .points {
-  color: #ff6b35;
+  color: #C4908F;
   font-weight: 600;
 }
 .low-stock {

@@ -195,7 +195,7 @@ function goBack() {
     color: #666;
     font-size: 14px;
     margin-bottom: 12px;
-    .pay-amount { color: #ff6b35; font-weight: 600; }
+    .pay-amount { color: #C4908F; font-weight: 600; }
   }
   .items-preview {
     display: flex;
@@ -209,7 +209,7 @@ function goBack() {
       background: #f9f9f9;
       border-radius: 8px;
       img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
-      .price { color: #ff6b35; font-size: 12px; }
+      .price { color: #C4908F; font-size: 12px; }
     }
   }
 }

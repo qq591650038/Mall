@@ -92,7 +92,7 @@ onMounted(load)
 .message-item { display: flex; gap: 12px; padding: 18px 8px; border-bottom: 1px solid #f2f2f2; cursor: pointer; }
 .message-item:last-child { border-bottom: 0; }
 .message-item .dot { width: 8px; height: 8px; margin-top: 7px; border-radius: 50%; background: transparent; }
-.message-item.unread .dot { background: #ff6b35; }
+.message-item.unread .dot { background: #C4908F; }
 .message-body { flex: 1; min-width: 0; }
 .message-title { display: flex; justify-content: space-between; gap: 16px; }
 .message-title strong { color: #333; font-size: 14px; }

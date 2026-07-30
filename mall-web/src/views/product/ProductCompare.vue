@@ -393,7 +393,7 @@ onMounted(loadProducts);
 
 .product-price {
   .price {
-    color: #ff6b35;
+    color: #C4908F;
     font-size: 18px;
     font-weight: 600;
   }
@@ -434,7 +434,7 @@ onMounted(loadProducts);
 
 .highlight {
   &.price {
-    color: #ff6b35;
+    color: #C4908F;
     font-weight: 600;
   }
 }

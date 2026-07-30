@@ -159,7 +159,7 @@ function goShopping() {
 
 .cart-item {
   border-top: 1px solid #f0f0f0;
-  &:hover { background: #fffaf7; }
+  &:hover { background: rgba(255, 249, 245, 0.8); }
 
   .col-product { display: flex; align-items: center; gap: 12px; }
   .product-img {
@@ -172,7 +172,7 @@ function goShopping() {
   .sku-info { margin: 0; font-size: 12px; color: #999; }
 
   .col-price, .col-subtotal { text-align: center; color: #666; }
-  .col-subtotal.price { color: #ff6b35; font-weight: 600; font-size: 16px; }
+  .col-subtotal.price { color: #C4908F; font-weight: 600; font-size: 16px; }
   .col-action { text-align: center; }
 }
 
@@ -192,6 +192,6 @@ function goShopping() {
   .footer-right { display: flex; align-items: center; gap: 16px; }
   .selected-count { color: #666; font-size: 14px; }
   .total-label { color: #333; }
-  .total-price { color: #ff6b35; font-size: 24px; font-weight: 700; }
+  .total-price { color: #C4908F; font-size: 24px; font-weight: 700; }
 }
 </style>

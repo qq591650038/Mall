@@ -195,7 +195,7 @@ function goRefundDetail(id: number) {
   transition: all 0.2s;
 
   &:hover { background: #f5f5f5; }
-  &.active { background: #ff6b35; color: #fff; }
+  &.active { background: #C4908F; color: #fff; }
 }
 
 .empty-state {
@@ -258,7 +258,7 @@ function goRefundDetail(id: number) {
   justify-content: space-between;
 
   .amount { font-size: 13px; color: #666; }
-  .price { color: #ff6b35; font-size: 20px; font-weight: 700; }
+  .price { color: #C4908F; font-size: 20px; font-weight: 700; }
   .actions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 }
 

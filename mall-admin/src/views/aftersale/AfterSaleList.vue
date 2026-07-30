@@ -538,7 +538,7 @@ onMounted(loadData)
 }
 
 .amount-text {
-  color: #ff6b35;
+  color: #C4908F;
   font-weight: 600;
 }
 

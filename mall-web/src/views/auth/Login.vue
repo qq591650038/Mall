@@ -142,7 +142,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #fff5f0 0%, #ffe8de 100%);
+  background: linear-gradient(135deg, rgba(216, 169, 169, 0.12) 0%, #ffe8de 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -158,7 +158,7 @@ onMounted(() => {
   background: #fff;
   border-radius: 16px;
   padding: 40px 32px;
-  box-shadow: 0 12px 40px rgba(255, 107, 53, 0.12);
+  box-shadow: 0 12px 40px rgba(196, 144, 143, 0.12);
 }
 
 .login-header {
@@ -191,16 +191,16 @@ onMounted(() => {
 .submit-btn {
   width: 100%;
   margin-top: 8px;
-  background: #ff6b35;
-  border-color: #ff6b35;
-  &:hover { background: #ff5722; border-color: #ff5722; }
+  background: #C4908F;
+  border-color: #D8A9A9;
+  &:hover { background: #B07878; border-color: #B07878; }
 }
 
 .login-footer {
   text-align: center;
   margin-top: 20px;
   a {
-    color: #ff6b35;
+    color: #C4908F;
     text-decoration: none;
     font-size: 14px;
   }

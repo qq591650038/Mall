@@ -185,102 +185,339 @@ function getOrderStatusClass(status: number) {
 </template>
 
 <style scoped lang="scss">
-.order-list-page { background: #f5f5f5; min-height: 100vh; }
-.main-content { padding: 24px 0; }
-.container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
-.page-title { font-size: 20px; margin: 0 0 16px; }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+$color-bg: #FFF9F5;
+$color-bg-warm: #F5E6D3;
+$color-accent: #D8A9A9;
+$color-accent-dark: #C4908F;
+$color-text: #3A3A3A;
+$color-text-light: #6B6B6B;
+$color-text-muted: #9B9B9B;
+$shadow-card: 0 4px 20px rgba(212, 169, 169, 0.12);
+$shadow-hover: 0 8px 32px rgba(212, 169, 169, 0.2);
+
+.order-list-page {
+  background: $color-bg;
+  min-height: 100vh;
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.main-content {
+  padding: 32px 0;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+.page-title {
+  font-size: 32px;
+  margin: 0 0 32px;
+  color: $color-text;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(216, 169, 169, 0.2);
+}
 
 .order-tabs {
-  background: #fff;
-  border-radius: 12px;
-  padding: 8px;
-  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 12px;
+  margin-bottom: 28px;
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  box-shadow: $shadow-card;
+  border: 1px solid rgba(216, 169, 169, 0.1);
 }
 
 .tab-item {
   flex: 1;
   text-align: center;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 14px 20px;
+  border-radius: 14px;
   cursor: pointer;
-  font-size: 14px;
-  color: #666;
-  transition: all 0.2s;
+  font-size: 15px;
+  font-weight: 500;
+  color: $color-text-light;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  &:hover { background: #f5f5f5; }
-  &.active { background: #ff6b35; color: #fff; }
+  &:hover {
+    background: rgba(216, 169, 169, 0.1);
+    color: $color-accent-dark;
+  }
+
+  &.active {
+    background: linear-gradient(135deg, $color-accent 0%, $color-accent-dark 100%);
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(216, 169, 169, 0.3);
+  }
 }
 
 .empty-state {
-  background: #fff;
-  border-radius: 12px;
-  padding: 60px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 80px;
   text-align: center;
-  color: #999;
+  color: $color-text-muted;
+  font-size: 16px;
+  box-shadow: $shadow-card;
+  border: 1px solid rgba(216, 169, 169, 0.1);
 }
 
-.order-list { display: flex; flex-direction: column; gap: 16px; }
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 .order-card {
-  background: #fff;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
   overflow: hidden;
+  box-shadow: $shadow-card;
+  border: 1px solid rgba(216, 169, 169, 0.1);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-hover;
+  }
 }
 
 .order-header {
-  background: #fafafa;
-  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(245, 230, 211, 0.5) 0%, rgba(255, 249, 245, 0.5) 100%);
+  padding: 16px 24px;
   display: flex;
-  gap: 24px;
-  font-size: 13px;
-  color: #666;
+  gap: 28px;
+  font-size: 14px;
+  color: $color-text-light;
   align-items: center;
+  border-bottom: 1px solid rgba(216, 169, 169, 0.1);
 
-  .order-status { font-weight: 500; }
-  .pending-pay { color: #ff6b35; }
-  .pending-ship { color: #1890ff; }
-  .pending-receive { color: #722ed1; }
-  .completed { color: #52c41a; }
-  .cancelled { color: #999; }
+  .order-no {
+    font-weight: 500;
+    color: $color-text;
+  }
+
+  .order-status {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .pending-pay {
+    color: $color-accent-dark;
+  }
+
+  .pending-ship {
+    color: #1890ff;
+  }
+
+  .pending-receive {
+    color: #722ed1;
+  }
+
+  .completed {
+    color: #52c41a;
+  }
+
+  .cancelled {
+    color: $color-text-muted;
+  }
+
+  .pending-group {
+    color: #fa8c16;
+  }
 }
 
-.order-body { padding: 16px 20px; display: flex; gap: 20px; }
+.order-body {
+  padding: 20px 24px;
+  display: flex;
+  gap: 24px;
+}
 
-.order-items { flex: 1; cursor: pointer; }
+.order-items {
+  flex: 1;
+  cursor: pointer;
+}
 
 .item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px dashed #f0f0f0;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px dashed rgba(216, 169, 169, 0.2);
+  transition: all 0.3s;
 
-  &:last-child { border-bottom: none; }
-  .item-img { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; }
+  &:hover {
+    background: rgba(216, 169, 169, 0.05);
+    border-radius: 12px;
+    margin: 0 -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .item-img {
+    width: 70px;
+    height: 70px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: $color-bg-warm;
+  }
+
   .item-info {
     flex: 1;
-    p { margin: 0; font-size: 14px; color: #333; }
-    .sku { font-size: 12px; color: #999; }
+
+    p {
+      margin: 0;
+      font-size: 15px;
+      color: $color-text;
+      font-weight: 500;
+    }
+
+    .sku {
+      font-size: 13px;
+      color: $color-text-muted;
+      margin-top: 4px;
+    }
   }
-  .item-price { color: #666; font-size: 14px; }
+
+  .item-price {
+    color: $color-text-light;
+    font-size: 15px;
+    font-weight: 500;
+  }
 }
 
-.more-items { text-align: center; color: #999; font-size: 13px; padding: 8px; }
+.more-items {
+  text-align: center;
+  color: $color-text-muted;
+  font-size: 14px;
+  padding: 12px;
+  background: rgba(245, 230, 211, 0.3);
+  border-radius: 12px;
+  margin-top: 8px;
+}
 
 .order-summary {
-  width: 200px;
-  border-left: 1px solid #f0f0f0;
-  padding-left: 20px;
+  width: 220px;
+  border-left: 1px solid rgba(216, 169, 169, 0.15);
+  padding-left: 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 
-  .total { font-size: 13px; color: #666; }
-  .price { color: #ff6b35; font-size: 20px; font-weight: 700; }
-  .actions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .total {
+    font-size: 15px;
+    color: $color-text-light;
+    line-height: 1.6;
+  }
+
+  .price {
+    color: $color-accent-dark;
+    font-size: 26px;
+    font-weight: 700;
+    font-family: 'DIN Alternate', 'Helvetica Neue', sans-serif;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+
+    .el-button {
+      border-radius: 12px;
+      font-weight: 500;
+      transition: all 0.3s;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+  }
 }
 
-.pagination { display: flex; justify-content: center; margin-top: 24px; }
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+
+  :deep(.el-pagination) {
+    .el-pager li {
+      border-radius: 10px;
+      margin: 0 4px;
+      transition: all 0.3s;
+      font-weight: 500;
+
+      &:hover {
+        background: rgba(216, 169, 169, 0.1);
+      }
+
+      &.is-active {
+        background: $color-accent;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 24px;
+  }
+
+  .page-title {
+    font-size: 26px;
+  }
+
+  .order-tabs {
+    overflow-x: auto;
+    gap: 8px;
+    padding: 8px;
+
+    .tab-item {
+      flex: none;
+      padding: 12px 16px;
+      white-space: nowrap;
+    }
+  }
+
+  .order-body {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .order-summary {
+    width: 100%;
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid rgba(216, 169, 169, 0.15);
+    padding-top: 16px;
+
+    .actions {
+      flex-direction: row;
+      flex-wrap: wrap;
+
+      .el-button {
+        flex: 1;
+        min-width: 120px;
+      }
+    }
+  }
+}
 </style>

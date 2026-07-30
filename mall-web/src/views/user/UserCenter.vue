@@ -176,7 +176,7 @@ const userInfo = computed(() => userStore.userInfo)
   transition: all 0.2s;
 
   &:hover { background: #f5f5f5; }
-  &.active { background: #fff5f0; color: #ff6b35; font-weight: 500; }
+  &.active { background: rgba(216, 169, 169, 0.12); color: #C4908F; font-weight: 500; }
   .menu-icon { font-size: 18px; }
 }
 

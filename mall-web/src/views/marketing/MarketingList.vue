@@ -205,14 +205,14 @@ onMounted(() => {
     border: 1px solid #e8e8e8;
 
     &:hover {
-      color: #ff6b35;
-      border-color: #ff6b35;
+      color: #C4908F;
+      border-color: #D8A9A9;
     }
 
     &.active {
-      background: #ff6b35;
+      background: #C4908F;
       color: #fff;
-      border-color: #ff6b35;
+      border-color: #D8A9A9;
     }
   }
 }
@@ -250,7 +250,7 @@ onMounted(() => {
 
     &.LIMITED_DISCOUNT { background: linear-gradient(135deg, #faad14, #ff7a45); }
     &.FULL_REDUCTION { background: linear-gradient(135deg, #f5222d, #ff7875); }
-    &.FLASH_SALE { background: linear-gradient(135deg, #1890ff, #40a9ff); }
+    &.FLASH_SALE { background: linear-gradient(135deg, #D8A9A9, #C4908F); }
     &.GROUP_BUY { background: linear-gradient(135deg, #52c41a, #73d13d); }
   }
 

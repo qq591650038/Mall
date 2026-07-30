@@ -151,7 +151,7 @@ async function handleShip() {
           <el-descriptions-item label="商品总额">¥{{ order.totalAmount?.toFixed(2) }}</el-descriptions-item>
           <el-descriptions-item label="运费">¥{{ order.freightAmount?.toFixed(2) }}</el-descriptions-item>
           <el-descriptions-item label="优惠">¥{{ order.discountAmount?.toFixed(2) }}</el-descriptions-item>
-          <el-descriptions-item label="实付金额"><strong style="color:#ff6b35;font-size:18px">¥{{ order.payAmount?.toFixed(2) }}</strong></el-descriptions-item>
+          <el-descriptions-item label="实付金额"><strong style="color:#C4908F;font-size:18px">¥{{ order.payAmount?.toFixed(2) }}</strong></el-descriptions-item>
         </el-descriptions>
       </div>
 
@@ -177,7 +177,7 @@ async function handleShip() {
             v-for="(item, index) in timelineItems"
             :key="index"
             :timestamp="item.time"
-            :color="order.orderStatus >= item.status ? '#1890ff' : '#e4e7ed'"
+            :color="order.orderStatus >= item.status ? '#C4908F' : '#e4e7ed'"
           >
             <div class="timeline-title">{{ item.title }}</div>
             <div v-if="item.description" class="timeline-desc">{{ item.description }}</div>

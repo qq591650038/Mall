@@ -319,7 +319,7 @@ onUnmounted(() => {
 
   &.LIMITED_DISCOUNT::before { background: linear-gradient(90deg, #faad14, #ff7a45); }
   &.FULL_REDUCTION::before { background: linear-gradient(90deg, #f5222d, #ff7875); }
-  &.FLASH_SALE::before { background: linear-gradient(90deg, #1890ff, #40a9ff); }
+  &.FLASH_SALE::before { background: linear-gradient(90deg, #D8A9A9, #C4908F); }
   &.GROUP_BUY::before { background: linear-gradient(90deg, #52c41a, #73d13d); }
 }
 
@@ -335,7 +335,7 @@ onUnmounted(() => {
     font-size: 13px;
     color: #fff;
     margin-bottom: 12px;
-    background: #ff6b35;
+    background: #C4908F;
   }
 
   .activity-title {
@@ -359,7 +359,7 @@ onUnmounted(() => {
     margin-top: 12px;
     font-size: 16px;
     font-weight: 600;
-    color: #ff6b35;
+    color: #C4908F;
     font-variant-numeric: tabular-nums;
   }
 }

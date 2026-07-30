@@ -160,7 +160,7 @@ function retryPay() {
     text-align: left;
 
     p { margin: 8px 0; color: #666; font-size: 14px; }
-    .price { color: #ff6b35; font-size: 20px; font-weight: 700; }
+    .price { color: #C4908F; font-size: 20px; font-weight: 700; }
   }
 
   .result-actions {

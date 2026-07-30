@@ -41,53 +41,101 @@ const router = useRouter()
 
 <style scoped lang="scss">
 .app-footer {
-  background: #2c2c2c;
+  background: #2E3238;
   color: #aaa;
-  margin-top: 40px;
+  margin-top: 56px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
 
   .footer-inner {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 40px 20px 20px;
+    padding: 56px 48px 24px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 32px;
+    gap: 48px;
   }
 
   .footer-section {
     h4 {
       color: #fff;
-      margin-bottom: 16px;
-      font-size: 15px;
+      margin-bottom: 20px;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgba(216, 169, 169, 0.3);
+      display: inline-block;
     }
     a {
       display: block;
-      color: #aaa;
+      color: #b8b8b8;
       text-decoration: none;
-      padding: 4px 0;
-      font-size: 13px;
+      padding: 6px 0;
+      font-size: 14px;
       cursor: pointer;
-      &:hover { color: #ff6b35; }
+      transition: all 0.3s;
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 2px;
+        background: #D8A9A9;
+        transition: width 0.3s;
+      }
+
+      &:hover {
+        color: #D8A9A9;
+        padding-left: 10px;
+
+        &::before {
+          width: 6px;
+        }
+      }
     }
   }
 
   .payment-methods {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
     span {
-      background: #3a3a3a;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 12px;
+      background: rgba(216, 169, 169, 0.15);
+      color: #D8A9A9;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      border: 1px solid rgba(216, 169, 169, 0.2);
+      transition: all 0.3s;
+
+      &:hover {
+        background: rgba(216, 169, 169, 0.25);
+        transform: translateY(-2px);
+      }
     }
   }
 
   .footer-bottom {
-    border-top: 1px solid #3a3a3a;
-    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 24px;
     text-align: center;
-    font-size: 12px;
+    font-size: 13px;
+    color: #888;
+    margin-top: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-footer {
+    .footer-inner {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+      padding: 40px 24px 16px;
+    }
   }
 }
 </style>

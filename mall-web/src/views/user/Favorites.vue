@@ -454,8 +454,8 @@ function getGroupCount(groupId: number): number {
   }
 
   &.active {
-    background: #fff1eb;
-    color: #ff6b35;
+    background: rgba(216, 169, 169, 0.12);
+    color: #C4908F;
   }
 }
 
@@ -566,7 +566,7 @@ h3 {
 }
 
 .current-price {
-  color: #ff6b35;
+  color: #C4908F;
   font-size: 18px;
   font-weight: 600;
 }

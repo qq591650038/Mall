@@ -350,7 +350,7 @@ function goBack() {
   cursor: pointer;
   transition: all 0.2s;
 
-  &.active { border-color: #ff6b35; background: #fffaf7; }
+  &.active { border-color: #D8A9A9; background: rgba(255, 249, 245, 0.8); }
   .addr-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
   .name { font-size: 16px; font-weight: 500; }
   .phone { color: #666; }
@@ -371,7 +371,7 @@ function goBack() {
   .item-name { font-size: 14px; color: #333; }
   .item-sku { font-size: 12px; color: #999; }
   .item-price, .item-qty { text-align: center; color: #666; }
-  .item-subtotal { text-align: right; color: #ff6b35; font-weight: 600; }
+  .item-subtotal { text-align: right; color: #C4908F; font-weight: 600; }
 }
 
 .coupon-list { display: flex; flex-direction: column; gap: 12px; }
@@ -385,12 +385,12 @@ function goBack() {
   gap: 12px;
   transition: all 0.2s;
 
-  &.active { border-color: #ff6b35; background: #fffaf7; }
+  &.active { border-color: #D8A9A9; background: rgba(255, 249, 245, 0.8); }
   &.disabled { opacity: 0.5; cursor: not-allowed; }
   &.none { justify-content: center; color: #999; }
 
   .coupon-value {
-    background: #ff6b35;
+    background: #C4908F;
     color: #fff;
     padding: 4px 12px;
     border-radius: 4px;
@@ -423,14 +423,14 @@ function goBack() {
     margin-top: 8px;
   }
   &.discount .discount-amount { color: #52c41a; }
-  .pay-amount { color: #ff6b35; font-size: 24px; font-weight: 700; }
+  .pay-amount { color: #C4908F; font-size: 24px; font-weight: 700; }
 }
 
 .submit-btn {
   width: 100%;
   margin-top: 16px;
-  background: #ff6b35;
-  border-color: #ff6b35;
-  &:hover { background: #ff5722; border-color: #ff5722; }
+  background: #C4908F;
+  border-color: #D8A9A9;
+  &:hover { background: #B07878; border-color: #B07878; }
 }
 </style>

@@ -157,18 +157,20 @@ const isActive = (name: string) => route.name === name
 
 <style scoped lang="scss">
 .app-header {
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(216, 169, 169, 0.15);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 16px rgba(212, 169, 169, 0.08);
 
   .header-inner {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 20px;
-    height: 64px;
+    padding: 0 48px;
+    height: 72px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -178,73 +180,116 @@ const isActive = (name: string) => route.name === name
   .header-left {
     display: flex;
     align-items: center;
-    gap: 32px;
+    gap: 40px;
 
     .logo {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       text-decoration: none;
-      color: #ff6b35;
+      color: #C4908F;
       font-weight: 700;
+      transition: transform 0.3s;
 
-      .logo-icon { font-size: 28px; }
-      .logo-text { font-size: 22px; }
+      &:hover {
+        transform: scale(1.05);
+      }
+
+      .logo-icon { font-size: 32px; filter: drop-shadow(0 2px 4px rgba(212, 169, 169, 0.3)); }
+      .logo-text { font-size: 24px; letter-spacing: 0.5px; }
     }
 
     .nav {
       display: flex;
-      gap: 24px;
+      gap: 8px;
 
       a {
         text-decoration: none;
-        color: #666;
-        font-size: 15px;
-        padding: 6px 12px;
-        border-radius: 6px;
-        transition: all 0.2s;
+        color: #6B6B6B;
+        font-size: 16px;
+        padding: 10px 18px;
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        font-weight: 500;
 
-        &:hover { color: #ff6b35; background: #fff5f0; }
-        &.active { color: #ff6b35; font-weight: 500; }
+        &:hover {
+          color: #C4908F;
+          background: rgba(216, 169, 169, 0.12);
+          transform: translateY(-2px);
+        }
+        &.active {
+          color: #C4908F;
+          font-weight: 600;
+          background: rgba(216, 169, 169, 0.18);
+        }
       }
     }
   }
 
   .header-center {
     flex: 1;
-    max-width: 480px;
+    max-width: 520px;
 
     :deep(.el-input-group) {
-      border-radius: 20px;
+      border-radius: 24px;
+      overflow: hidden;
+      transition: box-shadow 0.3s;
+
+      &:hover {
+        box-shadow: 0 4px 16px rgba(212, 169, 169, 0.15);
+      }
+    }
+
+    :deep(.el-input__wrapper) {
+      padding: 6px 16px;
     }
   }
 
   .header-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
 
-    .cart-link {
-      text-decoration: none;
-      color: #333;
-      display: flex;
-      align-items: center;
-    }
-
+    .cart-link,
     .notification-link {
+      text-decoration: none;
+      color: #3A3A3A;
       display: flex;
       align-items: center;
-      color: #333;
-      text-decoration: none;
+      padding: 8px;
+      border-radius: 12px;
+      transition: all 0.3s;
+
+      &:hover {
+        background: rgba(216, 169, 169, 0.12);
+        color: #C4908F;
+        transform: translateY(-2px);
+      }
     }
 
     .user-info {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       cursor: pointer;
+      padding: 6px 14px 6px 8px;
+      border-radius: 20px;
+      transition: all 0.3s;
 
-      .username { font-size: 14px; color: #333; }
+      &:hover {
+        background: rgba(216, 169, 169, 0.12);
+      }
+
+      :deep(.el-avatar) {
+        transition: transform 0.3s;
+        border: 2px solid rgba(216, 169, 169, 0.3);
+      }
+
+      &:hover :deep(.el-avatar) {
+        transform: scale(1.08);
+      }
+
+      .username { font-size: 15px; color: #3A3A3A; font-weight: 500; }
     }
   }
 }

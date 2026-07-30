@@ -106,7 +106,7 @@ function getStatusText(status: number) {
                 v-for="(item, idx) in order.timeline"
                 :key="idx"
                 :timestamp="item.time"
-                :color="idx === 0 ? '#ff6b35' : '#e4e7ed'"
+                :color="idx === 0 ? '#C4908F' : '#e4e7ed'"
                 :type="idx === 0 ? 'primary' : ''"
               >
                 <div class="timeline-content">
@@ -220,7 +220,7 @@ function getStatusText(status: number) {
 }
 
 .logistics-info p { margin: 4px 0; color: #666; }
-.logistics-info .logistics-tip { color: #ff6b35; margin-top: 8px; }
+.logistics-info .logistics-tip { color: #C4908F; margin-top: 8px; }
 
 .auto-confirm-warning { padding: 12px 24px; }
 
@@ -255,7 +255,7 @@ function getStatusText(status: number) {
   .item-info .name { font-size: 14px; color: #333; }
   .item-info .sku { font-size: 12px; color: #999; }
   .item-price, .item-qty { text-align: center; color: #666; }
-  .item-subtotal { text-align: right; color: #ff6b35; font-weight: 600; }
+  .item-subtotal { text-align: right; color: #C4908F; font-weight: 600; }
 }
 
 .fee-list { max-width: 400px; }
@@ -267,6 +267,6 @@ function getStatusText(status: number) {
 
   &.total { border-top: 2px solid #f0f0f0; border-bottom: none; padding-top: 16px; }
   &.discount .discount { color: #52c41a; }
-  .price { color: #ff6b35; font-size: 20px; font-weight: 700; }
+  .price { color: #C4908F; font-size: 20px; font-weight: 700; }
 }
 </style>

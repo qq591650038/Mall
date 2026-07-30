@@ -196,7 +196,7 @@ function formatTime(time?: string) {
   .coupon-left {
     width: 140px;
     min-height: 120px;
-    background: linear-gradient(135deg, #ff6b35, #ff8c42);
+    background: linear-gradient(135deg, #D8A9A9, #C4908F);
     color: #fff;
     display: flex;
     align-items: center;

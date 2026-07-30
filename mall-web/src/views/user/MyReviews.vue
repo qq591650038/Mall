@@ -26,5 +26,5 @@ onMounted(() => load())
 <style scoped lang="scss">
 .page { min-height: 100vh; background: #f5f5f5; } main { padding: 24px 0; } .container { max-width: 960px; margin: 0 auto; padding: 0 20px; } h1 { margin: 0 0 18px; font-size: 21px; } .list { min-height: 360px; } .item { padding: 20px; margin-bottom: 12px; background: #fff; border-radius: 8px; }
 .head { display: flex; justify-content: space-between; margin-bottom: 8px; } .head button { padding: 0; border: 0; background: none; color: #333; font-weight: 600; cursor: pointer; } time { color: #999; font-size: 12px; } .item > p { margin: 12px 0; color: #444; line-height: 1.7; }
-.images { display: flex; gap: 8px; } .images :deep(.el-image) { width: 72px; height: 72px; border-radius: 6px; } .reply { margin-top: 14px; padding: 10px 12px; background: #f5f7fa; color: #666; font-size: 13px; } .reply strong { margin-right: 10px; color: #ff6b35; } :deep(.el-pagination) { justify-content: center; margin-top: 18px; }
+.images { display: flex; gap: 8px; } .images :deep(.el-image) { width: 72px; height: 72px; border-radius: 6px; } .reply { margin-top: 14px; padding: 10px 12px; background: #f5f7fa; color: #666; font-size: 13px; } .reply strong { margin-right: 10px; color: #C4908F; } :deep(.el-pagination) { justify-content: center; margin-top: 18px; }
 </style>

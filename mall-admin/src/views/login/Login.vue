@@ -80,7 +80,7 @@ export default { components: { User, Lock } }
 <style scoped lang="scss">
 .admin-login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #001529 0%, #1890ff 100%);
+  background: linear-gradient(135deg, #2E3238 0%, #C4908F 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,8 +105,8 @@ export default { components: { User, Lock } }
 .submit-btn {
   width: 100%;
   margin-top: 8px;
-  background: #1890ff;
-  border-color: #1890ff;
-  &:hover { background: #40a9ff; border-color: #40a9ff; }
+  background: linear-gradient(135deg, #C4908F 0%, #D8A9A9 100%);
+  border-color: #C4908F;
+  &:hover { background: #D8A9A9; border-color: #D8A9A9; }
 }
 </style>

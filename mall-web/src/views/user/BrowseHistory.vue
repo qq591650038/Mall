@@ -142,6 +142,6 @@ function goDetail(id: number) {
   h3 { margin: 0 0 6px; font-size: 14px; color: #333; cursor: pointer; }
   .time { margin: 0 0 8px; font-size: 12px; color: #999; }
   .bottom { display: flex; justify-content: space-between; align-items: center; }
-  .price { color: #ff6b35; font-size: 16px; font-weight: 600; }
+  .price { color: #C4908F; font-size: 16px; font-weight: 600; }
 }
 </style>
